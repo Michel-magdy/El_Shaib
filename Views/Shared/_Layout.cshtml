@@ -30,159 +30,163 @@
     <nav class="navbar navbar-expand-lg navbar-elshaib">
         <div class="container">
             <!-- Brand -->
-            <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">
-                <span class="brand-icon">
-                    <i class="fas fa-leaf"></i>
-                </span>
-                الشايب
-            </a>
+            <div class="brand-shell"><a class="brand-link group" data-path="home" href="#"><img alt="Modern minimal premium farm logo for an Egyptian agricultural brand 'الشايب لإنتاج بيض المائدة' (Al-Shayeb Fresh Eggs). An elegant golden egg nestled in subtle green organic farm leaves with modern Arabic calligraphy style mark, clean flat vector design, transparent or crisp background, natural deep green (#1B4332) and warm golden egg yolk tones.. Design context: - Primary color: #1b4332
+                - Font: publicSans
+                - Mode: light
+                - Roundness: rounded-md
+                . The logo should be visually consistent with these brand tokens." class="brand-logo"
+                                                                                                    src="https://lh3.googleusercontent.com/aida/AEtjO1UupupjtwvlaTR7WgDNw1Ldh0vX50mlN0jga1t3qmRpHiB6qMSoKYkCL_diMOOkamAO8dgdI1hll80_h7R7L53Q9QTOK8EpfrMnRqFM2XCZp0wYU5N_yekrRcnPsnI4PyhjvRo4R2ieycwr6OGj5_0XL05TrYHBXf2FXTvfvOZepbAEO-Pp4Wh61ON0WAT5_4T9NQ2iwAxzWyjf26nryqBJPBP2OyzUAvE_seGmWJe5tF4TcL7D8XpKLZI">
+                <div class="brand-copy"><span style="color: var(--primary-dark);">الشايب</span><span
+                    class="font-label-sm text-label-sm text-outline tracking-wider">لإنتاج بيض المائدة -
+                    الأقصر</span></div>
+                </a></div>
 
-            <!-- Mobile Toggle -->
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain"
-                    aria-controls="navbarMain" aria-expanded="false" aria-label="فتح القائمة">
-                <span class="navbar-toggler-icon"></span>
-            </button>
+                <!-- Mobile Toggle -->
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain"
+                        aria-controls="navbarMain" aria-expanded="false" aria-label="فتح القائمة">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
 
-            <!-- Nav Content -->
-            <div class="collapse navbar-collapse" id="navbarMain">
-                <ul class="navbar-nav mx-auto">
-                    <li class="nav-item">
-                        <a class="nav-link active" asp-area="" asp-controller="Home" asp-action="Index">الرئيسية</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#about">من نحن</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#products">منتجاتنا</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#contact">تواصل معنا</a>
-                    </li>
-                </ul>
+                <!-- Nav Content -->
+                <div class="collapse navbar-collapse" id="navbarMain">
+                    <ul class="navbar-nav mx-auto">
+                        <li class="nav-item">
+                            <a class="nav-link active" asp-area="" asp-controller="Home" asp-action="Index">الرئيسية</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#about">من نحن</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#products">منتجاتنا</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#contact">تواصل معنا</a>
+                        </li>
+                    </ul>
 
-                <!-- Actions -->
-                <div class="navbar-actions">
-                    <a href="#" class="action-icon" title="بحث">
-                        <i class="fas fa-search"></i>
-                    </a>
-                    <a href="#" class="action-icon" title="سلة التسوق">
-                        <i class="fas fa-shopping-cart"></i>
-                        <span class="cart-badge">0</span>
-                    </a>
-                    <a href="#" class="btn btn-login">
-                        <i class="fas fa-user me-1"></i>
-                        تسجيل الدخول
-                    </a>
-                </div>
-            </div>
-        </div>
-    </nav>
-
-    <!-- ========== MAIN CONTENT ========== -->
-    <main>
-        @RenderBody()
-    </main>
-
-    <!-- ========== FOOTER ========== -->
-    <footer class="footer-section">
-        <div class="container">
-            <div class="row">
-                <!-- Brand Column -->
-                <div class="col-lg-4 col-md-6 mb-4">
-                    <div class="footer-brand">
-                        <div class="footer-logo">
-                            <span class="footer-logo-icon">
-                                <i class="fas fa-leaf"></i>
-                            </span>
-                            الشايب
-                        </div>
-                        <p>
-                            مزارع الشايب تقدم لكم أجود المنتجات الطازجة يومياً من المزرعة إلى باب بيتك.
-                            نحرص على تقديم منتجات طبيعية ١٠٠٪ بأعلى جودة وأفضل الأسعار.
-                        </p>
-                        <div class="footer-social">
-                            <a href="#" title="فيسبوك"><i class="fab fa-facebook-f"></i></a>
-                            <a href="#" title="تويتر"><i class="fab fa-twitter"></i></a>
-                            <a href="#" title="انستغرام"><i class="fab fa-instagram"></i></a>
-                            <a href="#" title="واتساب"><i class="fab fa-whatsapp"></i></a>
-                            <a href="#" title="سناب شات"><i class="fab fa-snapchat-ghost"></i></a>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Quick Links -->
-                <div class="col-lg-2 col-md-6 col-6 mb-4">
-                    <div class="footer-col">
-                        <h5>روابط سريعة</h5>
-                        <ul>
-                            <li><a href="#">الرئيسية</a></li>
-                            <li><a href="#">من نحن</a></li>
-                            <li><a href="#">منتجاتنا</a></li>
-                            <li><a href="#">مناطق التوصيل</a></li>
-                            <li><a href="#">الأسئلة الشائعة</a></li>
-                        </ul>
-                    </div>
-                </div>
-
-                <!-- Products -->
-                <div class="col-lg-2 col-md-6 col-6 mb-4">
-                    <div class="footer-col">
-                        <h5>المنتجات</h5>
-                        <ul>
-                            <li><a href="#">بيض بلدي</a></li>
-                            <li><a href="#">بيض مزارع</a></li>
-                            <li><a href="#">خضروات طازجة</a></li>
-                            <li><a href="#">فواكه موسمية</a></li>
-                            <li><a href="#">عروض خاصة</a></li>
-                        </ul>
-                    </div>
-                </div>
-
-                <!-- Contact Info -->
-                <div class="col-lg-4 col-md-6 mb-4">
-                    <div class="footer-col">
-                        <h5>تواصل معنا</h5>
-                        <div class="footer-contact-item">
-                            <i class="fas fa-map-marker-alt"></i>
-                            <span>منطقة القصيم، المملكة العربية السعودية</span>
-                        </div>
-                        <div class="footer-contact-item">
-                            <i class="fas fa-phone-alt"></i>
-                            <span dir="ltr">+966 50 000 0000</span>
-                        </div>
-                        <div class="footer-contact-item">
-                            <i class="fab fa-whatsapp"></i>
-                            <span dir="ltr">+966 50 000 0000</span>
-                        </div>
-                        <div class="footer-contact-item">
-                            <i class="fas fa-envelope"></i>
-                            <span>info&#64;elshaib.com</span>
-                        </div>
-                        <div class="footer-contact-item">
-                            <i class="fas fa-clock"></i>
-                            <span>يومياً من ٥:٠٠ صباحاً حتى ١١:٠٠ مساءً</span>
-                        </div>
+                    <!-- Actions -->
+                    <div class="navbar-actions">
+                        <a href="#" class="action-icon" title="بحث">
+                            <i class="fas fa-search"></i>
+                        </a>
+                        <a href="#" class="action-icon" title="سلة التسوق">
+                            <i class="fas fa-shopping-cart"></i>
+                            <span class="cart-badge">0</span>
+                        </a>
+                        <a href="#" class="btn btn-login">
+                            <i class="fas fa-user me-1"></i>
+                            تسجيل الدخول
+                        </a>
                     </div>
                 </div>
             </div>
-        </div>
+        </nav>
 
-        <!-- Footer Bottom -->
-        <div class="footer-bottom">
+        <!-- ========== MAIN CONTENT ========== -->
+        <main>
+            @RenderBody()
+        </main>
+
+        <!-- ========== FOOTER ========== -->
+        <footer class="footer-section">
             <div class="container">
-                <p>
-                    &copy; @DateTime.Now.Year جميع الحقوق محفوظة لـ <strong>مزارع الشايب</strong> |
-                    <a href="#" style="color: rgba(255,255,255,0.65);">سياسة الخصوصية</a> |
-                    <a href="#" style="color: rgba(255,255,255,0.65);">الشروط والأحكام</a>
-                </p>
-            </div>
-        </div>
-    </footer>
+                <div class="row">
+                    <!-- Brand Column -->
+                    <div class="col-lg-4 col-md-6 mb-4">
+                        <div class="footer-brand">
+                            <div class="footer-logo">
+                                <span class="footer-logo-icon">
+                                    <i class="fas fa-leaf"></i>
+                                </span>
+                                الشايب
+                            </div>
+                            <p>
+                                مزارع الشايب تقدم لكم أجود المنتجات الطازجة يومياً من المزرعة إلى باب بيتك.
+                                نحرص على تقديم منتجات طبيعية ١٠٠٪ بأعلى جودة وأفضل الأسعار.
+                            </p>
+                            <div class="footer-social">
+                                <a href="#" title="فيسبوك"><i class="fab fa-facebook-f"></i></a>
+                                <a href="#" title="تويتر"><i class="fab fa-twitter"></i></a>
+                                <a href="#" title="انستغرام"><i class="fab fa-instagram"></i></a>
+                                <a href="#" title="واتساب"><i class="fab fa-whatsapp"></i></a>
+                                <a href="#" title="سناب شات"><i class="fab fa-snapchat-ghost"></i></a>
+                            </div>
+                        </div>
+                    </div>
 
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
-    @await RenderSectionAsync("Scripts", required: false)
-</body>
+                    <!-- Quick Links -->
+                    <div class="col-lg-2 col-md-6 col-6 mb-4">
+                        <div class="footer-col">
+                            <h5>روابط سريعة</h5>
+                            <ul>
+                                <li><a href="#">الرئيسية</a></li>
+                                <li><a href="#">من نحن</a></li>
+                                <li><a href="#">منتجاتنا</a></li>
+                                <li><a href="#">مناطق التوصيل</a></li>
+                                <li><a href="#">الأسئلة الشائعة</a></li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Products -->
+                    <div class="col-lg-2 col-md-6 col-6 mb-4">
+                        <div class="footer-col">
+                            <h5>المنتجات</h5>
+                            <ul>
+                                <li><a href="#">بيض بلدي</a></li>
+                                <li><a href="#">بيض مزارع</a></li>
+                                <li><a href="#">خضروات طازجة</a></li>
+                                <li><a href="#">فواكه موسمية</a></li>
+                                <li><a href="#">عروض خاصة</a></li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Contact Info -->
+                    <div class="col-lg-4 col-md-6 mb-4">
+                        <div class="footer-col">
+                            <h5>تواصل معنا</h5>
+                            <div class="footer-contact-item">
+                                <i class="fas fa-map-marker-alt"></i>
+                                <span>منطقة القصيم، المملكة العربية السعودية</span>
+                            </div>
+                            <div class="footer-contact-item">
+                                <i class="fas fa-phone-alt"></i>
+                                <span dir="ltr">+966 50 000 0000</span>
+                            </div>
+                            <div class="footer-contact-item">
+                                <i class="fab fa-whatsapp"></i>
+                                <span dir="ltr">+966 50 000 0000</span>
+                            </div>
+                            <div class="footer-contact-item">
+                                <i class="fas fa-envelope"></i>
+                                <span>info&#64;elshaib.com</span>
+                            </div>
+                            <div class="footer-contact-item">
+                                <i class="fas fa-clock"></i>
+                                <span>يومياً من ٥:٠٠ صباحاً حتى ١١:٠٠ مساءً</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer Bottom -->
+            <div class="footer-bottom">
+                <div class="container">
+                    <p>
+                        &copy; @DateTime.Now.Year جميع الحقوق محفوظة لـ <strong>مزارع الشايب</strong> |
+                        <a href="#" style="color: rgba(255,255,255,0.65);">سياسة الخصوصية</a> |
+                        <a href="#" style="color: rgba(255,255,255,0.65);">الشروط والأحكام</a>
+                    </p>
+                </div>
+            </div>
+        </footer>
+
+        <script src="~/lib/jquery/dist/jquery.min.js"></script>
+        <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+        <script src="~/js/site.js" asp-append-version="true"></script>
+        @await RenderSectionAsync("Scripts", required: false)
+    </body>
 
 </html>
