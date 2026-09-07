@@ -1,0 +1,60 @@
+# Build output
+bin/
+obj/
+[Bb]uild/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+arm/
+arm64/
+
+# Visual Studio / Rider / VS Code
+.vs/
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# ASP.NET / .NET
+artifacts/
+TestResults/
+*.nupkg
+*.snupkg
+*.coverage
+*.coveragexml
+coverage/
+Generated_Code/
+
+# Entity Framework local artifacts
+*.db
+*.db-shm
+*.db-wal
+*.mdf
+*.ldf
+
+# Local configuration and secrets
+appsettings.Local.json
+appsettings.*.local.json
+secrets.json
+.env
+.env.*
+
+# Logs and temp files
+*.log
+logs/
+*.tmp
+*.temp
+*.swp
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
