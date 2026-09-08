@@ -1,0 +1,625 @@
+@model Product
+@{
+    ViewData["Title"] = Model.Name;
+
+    var primaryImage = Model.Images?.FirstOrDefault(img => img.IsPrimary)
+        ?? Model.Images?.FirstOrDefault();
+    var galleryImages = Model.Images?.OrderBy(i => i.IsPrimary ? 0 : 1).ToList()
+        ?? new List<ProductImage>();
+    var hasDiscount = Model.OldPrice.HasValue && Model.OldPrice > Model.Price;
+    var discountPercent = hasDiscount
+        ? (int)Math.Round((1 - (double)Model.Price / (double)Model.OldPrice!.Value) * 100)
+        : 0;
+    var inStock = Model.StockQuantity > 0;
+}
+
+<!-- ========== PRODUCT DETAILS CSS ========== -->
+<link rel="stylesheet" href="~/css/product-details.css" asp-append-version="true" />
+
+<!-- ========== BREADCRUMB ========== -->
+<div class="pd-breadcrumb">
+    <div class="container">
+        <nav aria-label="مسار التنقل">
+            <ol class="breadcrumb-list">
+                <li>
+                    <a asp-controller="Home" asp-action="Index">
+                        <i class="fas fa-home"></i>
+                        الرئيسية
+                    </a>
+                </li>
+                <li>
+                    <i class="fas fa-chevron-left breadcrumb-sep"></i>
+                    <a asp-controller="Product" asp-action="Index">المنتجات</a>
+                </li>
+                @if (Model.Category != null)
+                {
+                    <li>
+                        <i class="fas fa-chevron-left breadcrumb-sep"></i>
+                        <a href="#">@Model.Category.Name</a>
+                    </li>
+                }
+                <li class="active">
+                    <i class="fas fa-chevron-left breadcrumb-sep"></i>
+                    <span>@Model.Name</span>
+                </li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<!-- ========== PRODUCT DETAILS MAIN ========== -->
+<section class="pd-main">
+    <div class="container">
+        <div class="row g-4 g-lg-5">
+
+            <!-- ===== LEFT: Image Gallery ===== -->
+            <div class="col-lg-6">
+                <div class="pd-gallery">
+                    <!-- Main Image -->
+                    <div class="pd-gallery-main">
+                        <img id="pdMainImage" src="@(primaryImage?.ImageUrl ?? "/images/HeroImage.jpg")"
+                             alt="@(primaryImage?.AltText ?? Model.Name)" />
+
+                        <!-- Badges -->
+                        <div class="pd-gallery-badges">
+                            @if (hasDiscount)
+                            {
+                                <span class="pd-badge pd-badge--discount">خصم @discountPercent%</span>
+                            }
+                            @if (Model.IsFeatured)
+                            {
+                                <span class="pd-badge pd-badge--featured">
+                                    <i class="fas fa-star"></i>
+                                    منتج مميز
+                                </span>
+                            }
+                        </div>
+
+                        <!-- Wishlist -->
+                        <button class="pd-wishlist-btn" type="button" aria-label="إضافة إلى المفضلة">
+                            <i class="far fa-heart"></i>
+                        </button>
+
+                        <!-- Zoom icon -->
+                        <button class="pd-zoom-btn" type="button" aria-label="تكبير الصورة" id="pdZoomBtn">
+                            <i class="fas fa-search-plus"></i>
+                        </button>
+                    </div>
+
+                    <!-- Thumbnail Strip -->
+                    @if (galleryImages.Count > 0)
+                    {
+                        <div class="pd-gallery-thumbs">
+                            @foreach (var image in galleryImages)
+                            {
+                                <button class="pd-thumb @(image == primaryImage ? "pd-thumb--active" : "")" type="button"
+                                        data-img="@image.ImageUrl" data-alt="@(image.AltText ?? Model.Name)"
+                                        aria-label="@(image.AltText ?? "صورة المنتج")">
+                                    <img src="@image.ImageUrl" alt="@(image.AltText ?? "صورة مصغرة")" loading="lazy" />
+                                </button>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- ===== RIGHT: Product Info ===== -->
+            <div class="col-lg-6">
+                <div class="pd-info">
+                    <!-- Category Tag -->
+                    @if (Model.Category != null)
+                    {
+                        <span class="pd-category-tag">
+                            <i class="fas fa-tag"></i>
+                            @Model.Category.Name
+                        </span>
+                    }
+
+                    <!-- Product Name -->
+                    <h1 class="pd-name">@Model.Name</h1>
+
+                    <!-- Meta Info (package type, unit size) -->
+                    <div class="pd-meta">
+                        @if (!string.IsNullOrEmpty(Model.PackageType))
+                        {
+                            <span class="pd-meta-item">
+                                <i class="fas fa-box"></i>
+                                @Model.PackageType
+                            </span>
+                        }
+                        @if (!string.IsNullOrEmpty(Model.UnitSize))
+                        {
+                            <span class="pd-meta-item">
+                                <i class="fas fa-weight-hanging"></i>
+                                @Model.UnitSize
+                            </span>
+                        }
+                        <span class="pd-meta-item pd-meta-item--stock @(inStock ? "" : "pd-meta-item--out")">
+                            <i class="fas @(inStock ? "fa-check-circle" : "fa-times-circle")"></i>
+                            @(inStock ? $"متوفر ({Model.StockQuantity} قطعة)" : "غير متوفر حالياً")
+                        </span>
+                    </div>
+
+                    <!-- Rating placeholder -->
+                    <div class="pd-rating">
+                        <div class="pd-stars">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star-half-alt"></i>
+                        </div>
+                        <span class="pd-rating-text">4.5 (128 تقييم)</span>
+                    </div>
+
+                    <!-- Divider -->
+                    <hr class="pd-divider" />
+
+                    <!-- Price -->
+                    <div class="pd-price-block">
+                        <div class="pd-price-main">
+                            <span class="pd-price">@Model.Price.ToString("0")</span>
+                            <span class="pd-currency">ج.م</span>
+                        </div>
+                        @if (hasDiscount)
+                        {
+                            <div class="pd-price-old-group">
+                                <span class="pd-old-price">@Model.OldPrice!.Value.ToString("0") ج.م</span>
+                                <span class="pd-discount-label">وفر @((Model.OldPrice.Value - Model.Price).ToString("0"))
+                                    ج.م</span>
+                                </div>
+                            }
+                        </div>
+
+                        <!-- Description -->
+                        @if (!string.IsNullOrEmpty(Model.Description))
+                        {
+                            <div class="pd-description">
+                                <h6>
+                                    <i class="fas fa-info-circle"></i>
+                                    وصف المنتج
+                                </h6>
+                                <p>@Model.Description</p>
+                            </div>
+                        }
+
+                        <!-- Divider -->
+                        <hr class="pd-divider" />
+
+                        <!-- Quantity + Add to Cart -->
+                        <div class="pd-order-section">
+                            <label class="pd-order-label">الكمية</label>
+                            <div class="pd-order-row">
+                                <div class="pd-qty">
+                                    <button class="pd-qty-btn pd-qty-minus" type="button" aria-label="تقليل الكمية">
+                                        <i class="fas fa-minus"></i>
+                                    </button>
+                                    <input type="number" class="pd-qty-input" value="1" min="1" max="@Model.StockQuantity"
+                                           id="pdQtyInput" />
+                                    <button class="pd-qty-btn pd-qty-plus" type="button" aria-label="زيادة الكمية">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+
+                                <button class="pd-add-cart-btn" type="button" @(inStock ? "" : "disabled")>
+                                    <i class="fas fa-cart-plus"></i>
+                                    أضف للسلة
+                                </button>
+                            </div>
+
+                            <button class="pd-buy-now-btn" type="button" @(inStock ? "" : "disabled")>
+                                <i class="fas fa-bolt"></i>
+                                اشتري الآن
+                            </button>
+                        </div>
+
+                        <!-- Delivery & Trust Badges -->
+                        <div class="pd-trust-badges">
+                            <div class="pd-trust-item">
+                                <i class="fas fa-truck"></i>
+                                <div>
+                                    <strong>توصيل سريع</strong>
+                                    <span>خلال 24 ساعة داخل الأقصر</span>
+                                </div>
+                            </div>
+                            <div class="pd-trust-item">
+                                <i class="fas fa-sync-alt"></i>
+                                <div>
+                                    <strong>استبدال مجاني</strong>
+                                    <span>في حالة وجود أي عيب</span>
+                                </div>
+                            </div>
+                            <div class="pd-trust-item">
+                                <i class="fas fa-shield-alt"></i>
+                                <div>
+                                    <strong>جودة مضمونة</strong>
+                                    <span>منتج طبيعي ١٠٠٪</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========== PRODUCT DETAILS TABS ========== -->
+    <section class="pd-tabs-section">
+        <div class="container">
+            <div class="pd-tabs">
+                <button class="pd-tab active" data-tab="details" type="button">
+                    <i class="fas fa-file-alt"></i>
+                    تفاصيل المنتج
+                </button>
+                <button class="pd-tab" data-tab="specs" type="button">
+                    <i class="fas fa-list-ul"></i>
+                    المواصفات
+                </button>
+                <button class="pd-tab" data-tab="reviews" type="button">
+                    <i class="fas fa-star"></i>
+                    التقييمات
+                </button>
+                <button class="pd-tab" data-tab="shipping" type="button">
+                    <i class="fas fa-truck"></i>
+                    الشحن والتوصيل
+                </button>
+            </div>
+
+            <div class="pd-tabs-content">
+                <!-- Details Tab -->
+                <div class="pd-tab-pane active" id="tab-details">
+                    <div class="pd-tab-body">
+                        <h5>عن هذا المنتج</h5>
+                        <p>
+                            @(Model.Description ?? "بيض طازج من مزارع الشايب في الأقصر. يتم جمعه يومياً مع فحص دقيق لضمان أعلى جودة ونظافة. مناسب لجميع الاستخدامات المنزلية والتجارية.")
+                        </p>
+                        <div class="pd-features-grid">
+                            <div class="pd-feature-item">
+                                <i class="fas fa-check"></i>
+                                <span>إنتاج يومي طازج</span>
+                            </div>
+                            <div class="pd-feature-item">
+                                <i class="fas fa-check"></i>
+                                <span>فحص جودة صارم</span>
+                            </div>
+                            <div class="pd-feature-item">
+                                <i class="fas fa-check"></i>
+                                <span>تغليف آمن ومحكم</span>
+                            </div>
+                            <div class="pd-feature-item">
+                                <i class="fas fa-check"></i>
+                                <span>بدون هرمونات أو مواد حافظة</span>
+                            </div>
+                            <div class="pd-feature-item">
+                                <i class="fas fa-check"></i>
+                                <span>مناسب لجميع الوصفات</span>
+                            </div>
+                            <div class="pd-feature-item">
+                                <i class="fas fa-check"></i>
+                                <span>تخزين مبرد</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Specs Tab -->
+                <div class="pd-tab-pane" id="tab-specs">
+                    <div class="pd-tab-body">
+                        <h5>مواصفات المنتج</h5>
+                        <table class="pd-specs-table">
+                            <tbody>
+                                <tr>
+                                    <td class="spec-label">اسم المنتج</td>
+                                    <td>@Model.Name</td>
+                                </tr>
+                                @if (Model.Category != null)
+                                {
+                                    <tr>
+                                        <td class="spec-label">التصنيف</td>
+                                        <td>@Model.Category.Name</td>
+                                    </tr>
+                                }
+                                @if (!string.IsNullOrEmpty(Model.PackageType))
+                                {
+                                    <tr>
+                                        <td class="spec-label">نوع التعبئة</td>
+                                        <td>@Model.PackageType</td>
+                                    </tr>
+                                }
+                                @if (!string.IsNullOrEmpty(Model.UnitSize))
+                                {
+                                    <tr>
+                                        <td class="spec-label">الحجم / الوحدة</td>
+                                        <td>@Model.UnitSize</td>
+                                    </tr>
+                                }
+                                <tr>
+                                    <td class="spec-label">التوفر</td>
+                                    <td>
+                                        <span class="@(inStock ? "text-success" : "text-danger")">
+                                            @(inStock ? "متوفر" : "غير متوفر")
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="spec-label">الحالة</td>
+                                    <td>طازج - إنتاج يومي</td>
+                                </tr>
+                                <tr>
+                                    <td class="spec-label">المصدر</td>
+                                    <td>مزارع الشايب - الأقصر</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Reviews Tab -->
+                <div class="pd-tab-pane" id="tab-reviews">
+                    <div class="pd-tab-body">
+                        <h5>تقييمات العملاء</h5>
+                        <div class="pd-reviews-summary">
+                            <div class="pd-reviews-score">
+                                <span class="score-number">4.5</span>
+                                <div class="score-stars">
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star-half-alt"></i>
+                                </div>
+                                <span class="score-count">من 128 تقييم</span>
+                            </div>
+                            <div class="pd-reviews-bars">
+                                @for (int i = 5; i >= 1; i--)
+                                {
+                                    <div class="review-bar-row">
+                                        <span>@i <i class="fas fa-star"></i></span>
+                                        <div class="review-bar">
+                                            <div class="review-bar-fill"
+                                                 style="width: @(i == 5 ? "72" : i == 4 ? "18" : i == 3 ? "6" : i == 2 ? "3" : "1")%">
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+
+                        <!-- Sample Reviews -->
+                        <div class="pd-review-list">
+                            <div class="pd-review-item">
+                                <div class="review-avatar">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                <div class="review-body">
+                                    <div class="review-header">
+                                        <strong>أحمد محمد</strong>
+                                        <div class="review-stars">
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star"></i>
+                                        </div>
+                                        <span class="review-date">منذ 3 أيام</span>
+                                    </div>
+                                    <p>بيض ممتاز وطازج جداً. التوصيل كان سريع والتغليف محكم. أنصح بالشراء.</p>
+                                </div>
+                            </div>
+                            <div class="pd-review-item">
+                                <div class="review-avatar">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                <div class="review-body">
+                                    <div class="review-header">
+                                        <strong>سارة علي</strong>
+                                        <div class="review-stars">
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star"></i>
+                                            <i class="far fa-star"></i>
+                                        </div>
+                                        <span class="review-date">منذ أسبوع</span>
+                                    </div>
+                                    <p>جودة ممتازة والطعم طبيعي. وصلني الطلب في اليوم التالي. شكراً مزارع الشايب.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Shipping Tab -->
+                <div class="pd-tab-pane" id="tab-shipping">
+                    <div class="pd-tab-body">
+                        <h5>معلومات الشحن والتوصيل</h5>
+                        <div class="pd-shipping-info">
+                            <div class="shipping-item">
+                                <div class="shipping-icon">
+                                    <i class="fas fa-truck"></i>
+                                </div>
+                                <div>
+                                    <strong>التوصيل داخل الأقصر</strong>
+                                    <p>توصيل خلال 24 ساعة من تأكيد الطلب. التوصيل مجاني للطلبات فوق 200 ج.م</p>
+                                </div>
+                            </div>
+                            <div class="shipping-item">
+                                <div class="shipping-icon">
+                                    <i class="fas fa-clock"></i>
+                                </div>
+                                <div>
+                                    <strong>مواعيد التوصيل</strong>
+                                    <p>يومياً من الساعة ٥:٠٠ صباحاً حتى ١١:٠٠ مساءً</p>
+                                </div>
+                            </div>
+                            <div class="shipping-item">
+                                <div class="shipping-icon">
+                                    <i class="fas fa-box"></i>
+                                </div>
+                                <div>
+                                    <strong>التغليف</strong>
+                                    <p>تغليف خاص لحماية المنتجات أثناء النقل مع مواد عازلة للحرارة</p>
+                                </div>
+                            </div>
+                            <div class="shipping-item">
+                                <div class="shipping-icon">
+                                    <i class="fas fa-undo"></i>
+                                </div>
+                                <div>
+                                    <strong>سياسة الاستبدال</strong>
+                                    <p>في حالة وجود أي عيب في المنتج يتم الاستبدال الفوري مجاناً خلال 24 ساعة</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========== RELATED PRODUCTS ========== -->
+    @if (ViewBag.RelatedProducts != null)
+    {
+        var relatedProducts = ViewBag.RelatedProducts as List<Product>;
+        if (relatedProducts != null && relatedProducts.Count > 0)
+        {
+            <section class="pd-related">
+                <div class="container">
+                    <div class="pd-related-header">
+                        <h3>
+                            <i class="fas fa-th-large"></i>
+                            منتجات مشابهة
+                        </h3>
+                        <a asp-controller="Product" asp-action="Index" class="pd-related-link">
+                            عرض الكل
+                            <i class="fas fa-arrow-left"></i>
+                        </a>
+                    </div>
+                    <div class="row g-4">
+                        @foreach (var rp in relatedProducts.Take(4))
+                        {
+                            var rpImage = rp.Images?.FirstOrDefault(img => img.IsPrimary)
+                                ?? rp.Images?.FirstOrDefault();
+
+                            <div class="col-xl-3 col-lg-4 col-md-6">
+                                <a asp-controller="Product" asp-action="Details" asp-route-id="@rp.Id" class="pd-related-card">
+                                    <div class="pd-related-img">
+                                        <img src="@(rpImage?.ImageUrl ?? "/images/HeroImage.jpg")" alt="@(rpImage?.AltText ?? rp.Name)"
+                                             loading="lazy" />
+                                    </div>
+                                    <div class="pd-related-body">
+                                        <h6>@rp.Name</h6>
+                                        <div class="pd-related-price">
+                                            <span class="related-price">@rp.Price.ToString("0") ج.م</span>
+                                            @if (rp.OldPrice.HasValue && rp.OldPrice > rp.Price)
+                                            {
+                                                <span class="related-old-price">@rp.OldPrice.Value.ToString("0") ج.م</span>
+                                            }
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </section>
+        }
+    }
+
+    <!-- ========== IMAGE LIGHTBOX MODAL ========== -->
+    <div class="pd-lightbox" id="pdLightbox">
+        <button class="pd-lightbox-close" type="button" aria-label="إغلاق" id="pdLightboxClose">
+            <i class="fas fa-times"></i>
+        </button>
+        <div class="pd-lightbox-body">
+            <img id="pdLightboxImg" src="" alt="صورة مكبرة" />
+        </div>
+    </div>
+
+    @section Scripts {
+        <script>
+            // ===== Thumbnail gallery switching =====
+            document.querySelectorAll('.pd-thumb').forEach(thumb => {
+                thumb.addEventListener('click', function () {
+                    const mainImg = document.getElementById('pdMainImage');
+                    const newSrc = this.dataset.img;
+                    const newAlt = this.dataset.alt || this.querySelector('img').alt;
+
+                    // Skip if already active
+                    if (mainImg.src.endsWith(newSrc)) return;
+
+                    // Fade out, swap, fade in
+                    mainImg.style.opacity = '0';
+                    setTimeout(() => {
+                        mainImg.src = newSrc;
+                        mainImg.alt = newAlt;
+                        mainImg.style.opacity = '1';
+                    }, 200);
+
+                    // Update active state
+                    document.querySelectorAll('.pd-thumb').forEach(t => t.classList.remove('pd-thumb--active'));
+                    this.classList.add('pd-thumb--active');
+                });
+            });
+
+            // ===== Quantity controls =====
+            const qtyInput = document.getElementById('pdQtyInput');
+            document.querySelector('.pd-qty-plus')?.addEventListener('click', function () {
+                const max = parseInt(qtyInput.getAttribute('max')) || 99;
+                let val = parseInt(qtyInput.value) || 1;
+                if (val < max) qtyInput.value = val + 1;
+            });
+            document.querySelector('.pd-qty-minus')?.addEventListener('click', function () {
+                let val = parseInt(qtyInput.value) || 1;
+                if (val > 1) qtyInput.value = val - 1;
+            });
+
+            // ===== Tabs =====
+            document.querySelectorAll('.pd-tab').forEach(tab => {
+                tab.addEventListener('click', function () {
+                    const target = this.dataset.tab;
+                    document.querySelectorAll('.pd-tab').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.pd-tab-pane').forEach(p => p.classList.remove('active'));
+                    this.classList.add('active');
+                    document.getElementById('tab-' + target)?.classList.add('active');
+                });
+            });
+
+            // ===== Lightbox =====
+            const lightbox = document.getElementById('pdLightbox');
+            const lightboxImg = document.getElementById('pdLightboxImg');
+
+            document.getElementById('pdZoomBtn')?.addEventListener('click', function () {
+                const mainImg = document.getElementById('pdMainImage');
+                lightboxImg.src = mainImg.src;
+                lightboxImg.alt = mainImg.alt;
+                lightbox.classList.add('pd-lightbox--open');
+                document.body.style.overflow = 'hidden';
+            });
+
+            document.getElementById('pdLightboxClose')?.addEventListener('click', closeLightbox);
+            lightbox?.addEventListener('click', function (e) {
+                if (e.target === lightbox || e.target === lightbox.querySelector('.pd-lightbox-body')) {
+                    closeLightbox();
+                }
+            });
+
+            function closeLightbox() {
+                lightbox.classList.remove('pd-lightbox--open');
+                document.body.style.overflow = '';
+            }
+
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') closeLightbox();
+            });
+
+            // ===== Wishlist toggle =====
+            document.querySelector('.pd-wishlist-btn')?.addEventListener('click', function () {
+                const icon = this.querySelector('i');
+                icon.classList.toggle('far');
+                icon.classList.toggle('fas');
+                this.classList.toggle('pd-wishlist-btn--active');
+            });
+        </script>
+    }
+

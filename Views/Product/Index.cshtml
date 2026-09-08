@@ -1,0 +1,333 @@
+@model List<Product>
+@{
+    ViewData["Title"] = "المنتجات";
+}
+
+<!-- ========== PRODUCT PAGE CSS ========== -->
+<link rel="stylesheet" href="~/css/products.css" asp-append-version="true" />
+
+<!-- ========== BREADCRUMB / SUB-NAV ========== -->
+<div class="products-subnav">
+    <div class="container">
+        <div class="subnav-links">
+            <a asp-controller="Home" asp-action="Index" class="subnav-link">الرئيسية</a>
+            <a href="#" class="subnav-link active">المنتجات</a>
+        </div>
+        <div class="subnav-badge">
+            <i class="fas fa-store"></i>
+            كل المنتجات المتاحة حالياً في مخازن الأقصر
+        </div>
+    </div>
+</div>
+
+<!-- ========== PRODUCTS HERO BANNER ========== -->
+<section class="products-hero">
+    <div class="container">
+        <div class="products-hero-content">
+            <div class="products-hero-badge">
+                <i class="fas fa-egg"></i>
+                منتجات بيض المائدة الطازجة
+            </div>
+            <h1>منتجات بيض المائدة الطازجة</h1>
+            <p>
+                بيض طازج من المزرعة إلى بيتك مباشرة في الأقصر. فحص يومي دقيق لضمان نظافة طبيعية. تغليف محكم
+                لكل مناسبة وفاكهة بارزة بجودة ١٠٠٪
+            </p>
+            <div class="products-hero-badges">
+                <span class="phero-badge">
+                    <i class="fas fa-check-circle"></i>
+                    نكبر أول ١٠٠٪
+                </span>
+                <span class="phero-badge">
+                    <i class="fas fa-clock"></i>
+                    خلال 24 ساعة
+                </span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ========== SEARCH & FILTER BAR ========== -->
+<section class="products-filter-section">
+    <div class="container">
+        <!-- Search Row -->
+        <div class="products-search-row">
+            <div class="products-search-box">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" placeholder="ابحث عن كرتونة بيض، بيض أحمر أو بلدي أو أبيض..." />
+            </div>
+            <div class="products-sort-dropdown">
+                <select>
+                    <option>ترتيب حسب: الأكثر مبيعاً</option>
+                    <option>الأقل سعراً</option>
+                    <option>الأعلى سعراً</option>
+                    <option>الأحدث</option>
+                </select>
+                <i class="fas fa-chevron-down"></i>
+            </div>
+        </div>
+
+        <!-- Category Filter Tags -->
+        <div class="products-filter-tags">
+            <span class="filter-tag-label">
+                <i class="fas fa-filter"></i>
+                الكل
+            </span>
+            <a href="#" class="filter-tag active">كل المنتجات</a>
+            <a href="#" class="filter-tag">بيض مزارع طازج</a>
+            <a href="#" class="filter-tag">بيض أبيض</a>
+            <a href="#" class="filter-tag">بيض أحمر</a>
+            <a href="#" class="filter-tag">بيض بلدي</a>
+            <a href="#" class="filter-tag">
+                <i class="fas fa-box"></i>
+                كرتونة (30 بيضة)
+            </a>
+            <a href="#" class="filter-tag">
+                <i class="fas fa-boxes-stacked"></i>
+                6 كرتونات جملة (معبأ)
+            </a>
+            <a href="#" class="filter-tag">
+                <i class="fas fa-cubes"></i>
+                صندوق بيض (توريد تجاري)
+            </a>
+        </div>
+
+        <!-- Active Filters / Results Info -->
+        <div class="products-results-info">
+            <span class="results-count">
+                <i class="fas fa-th-large"></i>
+                @(Model?.Count ?? 0) منتج متوفر
+            </span>
+            <span class="results-filter-active">
+                <i class="fas fa-check-circle"></i>
+                كل المنتجات
+            </span>
+        </div>
+    </div>
+</section>
+
+<!-- ========== PRODUCTS GRID ========== -->
+<section class="products-grid-section">
+    <div class="container">
+        @if (Model == null || Model.Count == 0)
+        {
+            <div class="products-empty">
+                <div class="empty-icon">
+                    <i class="fas fa-egg"></i>
+                </div>
+                <h3>لا توجد منتجات متاحة حالياً</h3>
+                <p>سيتم إضافة المنتجات قريباً. تابعنا للحصول على أحدث العروض.</p>
+            </div>
+        }
+        else
+        {
+            <div class="row g-4">
+                @foreach (var product in Model)
+                {
+                    var primaryImage = product.Images?.FirstOrDefault(img => img.IsPrimary)
+                        ?? product.Images?.FirstOrDefault();
+                    var hasDiscount = product.OldPrice.HasValue && product.OldPrice > product.Price;
+                    var discountPercent = hasDiscount
+                        ? (int)Math.Round((1 - (double)product.Price / (double)product.OldPrice!.Value) * 100)
+                        : 0;
+
+                    <div class="col-xl-3 col-lg-4 col-md-6">
+                        <div class="pcard">
+                            <!-- Product Image -->
+                            <div class="pcard-image">
+                                <img src="@(primaryImage?.ImageUrl ?? "/images/HeroImage.jpg")"
+                                     alt="@(primaryImage?.AltText ?? product.Name)" loading="lazy" />
+                                
+                                <!-- Badges -->
+                                <div class="pcard-badges">
+                                    @if (product.Category != null)
+                                    {
+                                        <span class="pcard-badge pcard-badge--category">@product.Category.Name</span>
+                                    }
+                                    @if (hasDiscount)
+                                    {
+                                        <span class="pcard-badge pcard-badge--discount">خصم @discountPercent%</span>
+                                    }
+                                    @if (product.IsFeatured)
+                                    {
+                                        <span class="pcard-badge pcard-badge--featured">طازج</span>
+                                    }
+                                </div>
+
+                                <!-- Wishlist -->
+                                <button class="pcard-wishlist" type="button" aria-label="إضافة إلى المفضلة">
+                                    <i class="far fa-heart"></i>
+                                </button>
+                            </div>
+
+                            <!-- Product Info -->
+                            <div class="pcard-body">
+                                @if (!string.IsNullOrEmpty(product.PackageType) || !string.IsNullOrEmpty(product.UnitSize))
+                                {
+                                    <span class="pcard-type">@(product.PackageType ?? product.UnitSize)</span>
+                                }
+                                
+                                <h5 class="pcard-name">@product.Name</h5>
+                                
+                                @if (!string.IsNullOrEmpty(product.Description))
+                                {
+                                    <p class="pcard-desc">@product.Description</p>
+                                }
+
+                                <!-- Price Row -->
+                                <div class="pcard-price-row">
+                                    <div class="pcard-price-group">
+                                        <span class="pcard-price">@product.Price.ToString("0")</span>
+                                        <span class="pcard-currency">ج.م</span>
+                                    </div>
+                                    @if (hasDiscount)
+                                    {
+                                        <span class="pcard-old-price">@product.OldPrice!.Value.ToString("0") ج.م</span>
+                                    }
+                                </div>
+
+                                <!-- Quantity & Add to Cart -->
+                                <div class="pcard-actions">
+                                    <div class="pcard-qty">
+                                        <button class="qty-btn qty-minus" type="button" aria-label="أقل">
+                                            <i class="fas fa-minus"></i>
+                                        </button>
+                                        <input type="number" class="qty-input" value="1" min="1" max="99" />
+                                        <button class="qty-btn qty-plus" type="button" aria-label="أكثر">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    </div>
+                                    <span class="pcard-basket-label">
+                                        <i class="fas fa-cart-plus"></i>
+                                        أضف للسلة
+                                    </span>
+                                </div>
+
+                                <button class="pcard-add-btn" type="button">
+                                    <i class="fas fa-shopping-cart me-1"></i>
+                                    اطلب الآن
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <!-- Pagination (if needed) -->
+            @if (Model.Count > 8)
+            {
+                <div class="products-pagination">
+                    <nav aria-label="التنقل بين الصفحات">
+                        <ul class="pagination justify-content-center">
+                            <li class="page-item disabled">
+                                <a class="page-link" href="#" aria-label="السابق">
+                                    <i class="fas fa-chevron-right"></i>
+                                </a>
+                            </li>
+                            <li class="page-item active"><a class="page-link" href="#">١</a></li>
+                            <li class="page-item"><a class="page-link" href="#">٢</a></li>
+                            <li class="page-item"><a class="page-link" href="#">٣</a></li>
+                            <li class="page-item">
+                                <a class="page-link" href="#" aria-label="التالي">
+                                    <i class="fas fa-chevron-left"></i>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            }
+        }
+    </div>
+</section>
+
+<!-- ========== WHY CHOOSE US / GUARANTEE BANNER ========== -->
+<section class="products-guarantee">
+    <div class="container">
+        <div class="row align-items-center">
+            <!-- Text Content -->
+            <div class="col-lg-6 order-lg-2">
+                <div class="guarantee-content">
+                    <div class="guarantee-badge">
+                        <i class="fas fa-shield-alt"></i>
+                        منتج محلي صناعي | الشايب - الأقصر
+                    </div>
+                    <h2>
+                        نقاء، أمان، وطراجة
+                        <br />مضمونة حتى باب
+                        <br />بيتك
+                    </h2>
+                    <p>
+                        جميع منتجاتنا طبيعية ومختلفة
+                        الشراكة وتصنيف في مزارعنا
+                        الخاصة، ونعمل على ضبط وتنظيم
+                        المنتجات والحفاظ على جودة البيض.
+                    </p>
+                </div>
+            </div>
+            <!-- Feature Cards -->
+            <div class="col-lg-6 order-lg-1">
+                <div class="guarantee-cards">
+                    <div class="guarantee-card">
+                        <div class="guarantee-icon">
+                            <i class="fas fa-sync-alt"></i>
+                        </div>
+                        <div>
+                            <h5>استبدال فوري</h5>
+                            <p>في حالة وجود أي عيب بالمنتج نقوم بالاستبدال الفوري</p>
+                        </div>
+                    </div>
+                    <div class="guarantee-card">
+                        <div class="guarantee-icon">
+                            <i class="fas fa-wallet"></i>
+                        </div>
+                        <div>
+                            <h5>دفع مريح</h5>
+                            <p>الدفع عند الاستلام أو التحويل البنكي بطرق مريحة ومتعددة</p>
+                        </div>
+                    </div>
+                    <div class="guarantee-card">
+                        <div class="guarantee-icon">
+                            <i class="fas fa-truck"></i>
+                        </div>
+                        <div>
+                            <h5>توصيل 24 ساعة</h5>
+                            <p>توصيل سريع لجميع مناطق الأقصر خلال يوم عمل واحد</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        // Quantity +/- controls
+        document.querySelectorAll('.qty-plus').forEach(btn => {
+            btn.addEventListener('click', function () {
+                const input = this.closest('.pcard-qty').querySelector('.qty-input');
+                const max = parseInt(input.getAttribute('max')) || 99;
+                let val = parseInt(input.value) || 1;
+                if (val < max) input.value = val + 1;
+            });
+        });
+
+        document.querySelectorAll('.qty-minus').forEach(btn => {
+            btn.addEventListener('click', function () {
+                const input = this.closest('.pcard-qty').querySelector('.qty-input');
+                let val = parseInt(input.value) || 1;
+                if (val > 1) input.value = val - 1;
+            });
+        });
+
+        // Filter tags active toggle
+        document.querySelectorAll('.filter-tag').forEach(tag => {
+            tag.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelectorAll('.filter-tag').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+    </script>
+}
+
