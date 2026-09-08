@@ -1,10 +1,14 @@
+using El_Shaib.Interfaces;
 using El_Shaib.Models;
+using El_Shaib.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
+builder.Services.AddScoped<IProductService, ProductService>();
 
 
 builder.Services.AddDbContext<AppDbContext>(options =>

@@ -1,14 +1,23 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using El_Shaib.Models;
+using El_Shaib.Interfaces;
 
 namespace El_Shaib.Controllers;
 
 public class HomeController : Controller
 {
-    public IActionResult Index()
+    IProductService productService;
+
+    public HomeController(IProductService productService)
     {
-        return View();
+        this.productService = productService;
+    }
+
+    public async Task<IActionResult> Index()
+    {
+        var Products = await productService.GetAllAsync();
+        return View(Products);
     }
 
     public IActionResult Privacy()
