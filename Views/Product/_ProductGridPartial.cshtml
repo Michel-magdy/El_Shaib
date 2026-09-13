@@ -1,0 +1,175 @@
+@model El_Shaib.ViewModels.ProductListViewModel
+
+<!-- Active Filters / Results Info -->
+<div class="products-results-info mb-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <span class="results-count">
+        <i class="fas fa-th-large text-success me-1"></i>
+        <strong>@Model.TotalCount</strong> منتج متوفر
+    </span>
+    <span class="results-filter-active badge bg-light text-dark border px-3 py-2 rounded-pill">
+        <i class="fas fa-check-circle text-success me-1"></i>
+        @(Model.CurrentCategory?.Name ?? "كل المنتجات")
+        @if (!string.IsNullOrWhiteSpace(Model.Query))
+        {
+            <span> | بحث: "@Model.Query"</span>
+        }
+    </span>
+</div>
+
+@if (Model.Products == null || Model.Products.Count == 0)
+{
+    <div class="products-empty">
+        <div class="empty-icon">
+            <i class="fas fa-egg"></i>
+        </div>
+        <h3>لا توجد منتجات مطابقة للبحث</h3>
+        <p>لم نجد أي منتجات تطابق معايير البحث الحالية. جرب تغيير كلمة البحث أو تصفح كل المنتجات.</p>
+        <button type="button" class="btn btn-primary-custom mt-3 btn-reset-filters">
+            <i class="fas fa-undo me-2"></i>
+            عرض كل المنتجات
+        </button>
+    </div>
+}
+else
+{
+    <div class="row g-4">
+        @foreach (var product in Model.Products)
+        {
+            var primaryImage = product.Images?.FirstOrDefault(img => img.IsPrimary)
+                ?? product.Images?.FirstOrDefault();
+            var hasDiscount = product.OldPrice.HasValue && product.OldPrice > product.Price;
+            var discountPercent = hasDiscount
+                ? (int)Math.Round((1 - (double)product.Price / (double)product.OldPrice!.Value) * 100)
+                : 0;
+
+            <div class="col-xl-3 col-lg-4 col-md-6">
+                <div class="pcard" data-product-id="@product.Id">
+                    <!-- Product Image -->
+                    <div class="pcard-image">
+                        <a asp-controller="Product" asp-action="Details" asp-route-id="@product.Id">
+                            <img src="@(primaryImage?.ImageUrl ?? "/images/HeroImage.jpg")"
+                                 alt="@(primaryImage?.AltText ?? product.Name)"
+                                 loading="lazy"
+                                 decoding="async"
+                                 width="280"
+                                 height="200"
+                                 style="object-fit: cover;" />
+                        </a>
+
+                        <!-- Badges -->
+                        <div class="pcard-badges">
+                            @if (product.Category != null)
+                            {
+                                <span class="pcard-badge pcard-badge--category">@product.Category.Name</span>
+                            }
+                            @if (hasDiscount)
+                            {
+                                <span class="pcard-badge pcard-badge--discount">خصم @discountPercent%</span>
+                            }
+                            @if (product.IsFeatured)
+                            {
+                                <span class="pcard-badge pcard-badge--featured">طازج</span>
+                            }
+                        </div>
+
+                        <!-- Wishlist -->
+                        <button class="pcard-wishlist btn-wishlist-toggle" type="button" data-product-id="@product.Id" aria-label="إضافة إلى المفضلة">
+                            <i class="far fa-heart"></i>
+                        </button>
+                    </div>
+
+                    <!-- Product Body -->
+                    <div class="pcard-body">
+                        @if (!string.IsNullOrEmpty(product.PackageType) || !string.IsNullOrEmpty(product.UnitSize))
+                        {
+                            <span class="pcard-category">
+                                @(product.PackageType ?? product.UnitSize)
+                            </span>
+                        }
+
+                        <h3 class="pcard-title">
+                            <a asp-controller="Product" asp-action="Details" asp-route-id="@product.Id">
+                                @product.Name
+                            </a>
+                        </h3>
+
+                        <div class="pcard-price-row">
+                            <div class="pcard-price">
+                                <span class="price-val">@product.Price.ToString("0.00")</span>
+                                <span class="price-curr">ج.م</span>
+                            </div>
+                            @if (hasDiscount)
+                            {
+                                <span class="pcard-old-price">@product.OldPrice!.Value.ToString("0.00") ج.م</span>
+                            }
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="pcard-actions">
+                            <div class="pcard-qty">
+                                <button class="qty-btn qty-minus" type="button" aria-label="تقليل الكمية">
+                                    <i class="fas fa-minus"></i>
+                                </button>
+                                <input type="number" class="qty-input" value="1" min="1" max="@(product.StockQuantity > 0 ? product.StockQuantity : 99)" />
+                                <button class="qty-btn qty-plus" type="button" aria-label="زيادة الكمية">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+
+                            <button class="pcard-basket btn-add-cart-ajax" type="button" data-product-id="@product.Id" title="أضف للسلة">
+                                <span class="pcard-basket-label">
+                                    <i class="fas fa-cart-plus"></i>
+                                    أضف للسلة
+                                </span>
+                            </button>
+                        </div>
+
+                        <div class="d-flex gap-2 mt-2">
+                            <a asp-controller="Product" asp-action="Details" asp-route-id="@product.Id" class="btn btn-outline-secondary btn-sm flex-fill" type="button">
+                                تفاصيل أكثر
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Pagination -->
+    @if (Model.TotalPages > 1)
+    {
+        <div class="products-pagination mt-4">
+            <nav aria-label="التنقل بين الصفحات">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item @(Model.CurrentPage <= 1 ? "disabled" : "")">
+                        <a class="page-link ajax-page-link"
+                           href="#"
+                           data-page="@(Model.CurrentPage - 1)"
+                           aria-label="السابق">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </li>
+                    @for (int p = 1; p <= Model.TotalPages; p++)
+                    {
+                        <li class="page-item @(p == Model.CurrentPage ? "active" : "")">
+                            <a class="page-link ajax-page-link"
+                               href="#"
+                               data-page="@p">
+                                @p
+                            </a>
+                        </li>
+                    }
+                    <li class="page-item @(Model.CurrentPage >= Model.TotalPages ? "disabled" : "")">
+                        <a class="page-link ajax-page-link"
+                           href="#"
+                           data-page="@(Model.CurrentPage + 1)"
+                           aria-label="التالي">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    }
+}
+

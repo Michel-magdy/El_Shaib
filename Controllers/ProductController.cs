@@ -17,7 +17,22 @@ namespace El_Shaib.Controllers
         public async Task<IActionResult> Index(ProductFilterViewModel filter)
         {
             var model = await _productService.GetFilteredProductsAsync(filter);
+
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest" ||
+                Request.Query.ContainsKey("isAjax"))
+            {
+                return PartialView("_ProductGridPartial", model);
+            }
+
             return View(model);
+        }
+
+        // GET: /Product/Filter
+        [HttpGet]
+        public async Task<IActionResult> Filter(ProductFilterViewModel filter)
+        {
+            var model = await _productService.GetFilteredProductsAsync(filter);
+            return PartialView("_ProductGridPartial", model);
         }
 
         // GET: /Product/Details/5

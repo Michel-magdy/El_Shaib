@@ -32,7 +32,7 @@
 /* Performance: Defer offscreen rendering */
 .why-section,
 .footer-section {
-    content-visibility: auto;
+    /* content-visibility:visible; */
     contain-intrinsic-size: 0 500px;
 }
 
