@@ -1,3 +1,4 @@
+@inject El_Shaib.Interfaces.ICartService CartService
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 
@@ -6,14 +7,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - الشايب</title>
 
-    <!-- Google Fonts - Cairo -->
+    <!-- DNS Prefetch & Preconnect for Fast External CDNs -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap"
-          rel="stylesheet">
+    <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
 
-    <!-- Font Awesome 6 -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <!-- Google Fonts - Cairo (Essential weights with font-display: swap) -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome 6 (Preloaded for faster paint) -->
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" /></noscript>
 
     <!-- Bootstrap 5 RTL -->
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.rtl.min.css" />
@@ -32,7 +36,10 @@
             <!-- Brand -->
             <div class="brand-shell">
                 <a class="brand-link group" asp-controller="Home" asp-action="Index">
-                    <img alt="الشايب لإنتاج بيض المائدة" class="brand-logo" src="/images/Logo.jpg">
+                    <picture>
+                        <source srcset="/images/Logo.webp" type="image/webp">
+                        <img alt="الشايب لإنتاج بيض المائدة" class="brand-logo" src="/images/Logo.jpg" width="48" height="48" decoding="async">
+                    </picture>
                     <div class="brand-copy">
                         <span style="color: var(--primary-dark);">الشايب</span>
                         <span class="font-label-sm text-label-sm text-outline tracking-wider">لإنتاج بيض المائدة - الأقصر</span>
@@ -49,6 +56,7 @@
             @{
                 var currentCtrl = ViewContext.RouteData.Values["Controller"]?.ToString();
                 var currentAct = ViewContext.RouteData.Values["Action"]?.ToString();
+                var initialCartCount = await CartService.GetCartItemCountAsync();
             }
             <!-- Nav Content -->
             <div class="collapse navbar-collapse" id="navbarMain">
@@ -85,7 +93,7 @@
                     </a>
                     <a asp-controller="Cart" asp-action="Index" class="action-icon" title="سلة التسوق">
                         <i class="fas fa-shopping-cart"></i>
-                        <span class="cart-badge">0</span>
+                        <span class="cart-badge">@initialCartCount</span>
                     </a>
                     @if (User.Identity?.IsAuthenticated == true)
                     {
@@ -249,15 +257,6 @@
                 toast.show();
             };
 
-            // Sync cart count badge on page load
-            fetch('/Cart/Count')
-                .then(res => res.json())
-                .then(data => {
-                    if (data && data.count !== undefined) {
-                        document.querySelectorAll('.cart-badge').forEach(b => b.textContent = data.count);
-                    }
-                })
-                .catch(() => {});
 
             // Global Wishlist click listener
             document.addEventListener('click', async function(e) {

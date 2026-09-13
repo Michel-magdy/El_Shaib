@@ -2,26 +2,36 @@ using El_Shaib.Interfaces;
 using El_Shaib.Models;
 using El_Shaib.ViewModels;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace El_Shaib.Services;
 
 public class ProductService : GenericService<Product>, IProductService
 {
-    public ProductService(AppDbContext context) : base(context)
+    private readonly IMemoryCache _cache;
+
+    public ProductService(AppDbContext context, IMemoryCache cache) : base(context)
     {
+        _cache = cache;
     }
 
     public override async Task<List<Product>> GetAllAsync()
     {
-        return await entity
-            .Include(product => product.Images)
-            .Include(product => product.Category)
-            .ToListAsync();
+        return await _cache.GetOrCreateAsync("all_featured_products", async entry =>
+        {
+            entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5);
+            return await entity
+                .AsNoTracking()
+                .Include(product => product.Images)
+                .Include(product => product.Category)
+                .ToListAsync();
+        }) ?? new List<Product>();
     }
 
     public async Task<Product?> GetProductDetailsAsync(int id)
     {
         return await entity
+            .AsNoTracking()
             .Include(p => p.Category)
             .Include(p => p.Images)
             .FirstOrDefaultAsync(p => p.Id == id);
@@ -30,6 +40,7 @@ public class ProductService : GenericService<Product>, IProductService
     public async Task<List<Product>> GetProductsAsync(int pageNumber, int pageSize)
     {
         return await entity
+            .AsNoTracking()
             .Include(product => product.Images)
             .Include(product => product.Category)
             .Skip((pageNumber - 1) * pageSize)
@@ -39,16 +50,22 @@ public class ProductService : GenericService<Product>, IProductService
 
     public async Task<List<Category>> GetCategoriesAsync()
     {
-        return await context.Categories
-            .Where(c => c.IsActive)
-            .OrderBy(c => c.DisplayOrder)
-            .ThenBy(c => c.Name)
-            .ToListAsync();
+        return await _cache.GetOrCreateAsync("active_categories", async entry =>
+        {
+            entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(15);
+            return await context.Categories
+                .AsNoTracking()
+                .Where(c => c.IsActive)
+                .OrderBy(c => c.DisplayOrder)
+                .ThenBy(c => c.Name)
+                .ToListAsync();
+        }) ?? new List<Category>();
     }
 
     public async Task<ProductListViewModel> GetFilteredProductsAsync(ProductFilterViewModel filter)
     {
         var query = context.Products
+            .AsNoTracking()
             .Include(p => p.Images)
             .Include(p => p.Category)
             .AsQueryable();

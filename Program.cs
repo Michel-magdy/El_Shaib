@@ -1,13 +1,44 @@
+using System.IO.Compression;
 using El_Shaib.Interfaces;
 using El_Shaib.Models;
 using El_Shaib.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
+// Performance: Response Compression (Brotli & Gzip)
+builder.Services.AddResponseCompression(options =>
+{
+    options.EnableForHttps = true;
+    options.Providers.Add<BrotliCompressionProvider>();
+    options.Providers.Add<GzipCompressionProvider>();
+    options.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(new[]
+    {
+        "image/svg+xml",
+        "application/javascript",
+        "text/css",
+        "text/html",
+        "application/json"
+    });
+});
+
+builder.Services.Configure<BrotliCompressionProviderOptions>(options =>
+{
+    options.Level = CompressionLevel.Fastest;
+});
+
+builder.Services.Configure<GzipCompressionProviderOptions>(options =>
+{
+    options.Level = CompressionLevel.Fastest;
+});
+
+// Performance: In-Memory Caching for catalog and areas
+builder.Services.AddMemoryCache();
 
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
@@ -39,6 +70,9 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 var app = builder.Build();
 
+// Performance: Enable Response Compression early in pipeline
+app.UseResponseCompression();
+
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
@@ -47,6 +81,22 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// Performance: Static file caching headers (7 days)
+app.UseStaticFiles(new StaticFileOptions
+{
+    OnPrepareResponse = ctx =>
+    {
+        var path = ctx.File.Name.ToLowerInvariant();
+        if (path.EndsWith(".css") || path.EndsWith(".js") || path.EndsWith(".jpg") || 
+            path.EndsWith(".jpeg") || path.EndsWith(".png") || path.EndsWith(".webp") || 
+            path.EndsWith(".svg") || path.EndsWith(".woff2"))
+        {
+            ctx.Context.Response.Headers.Append("Cache-Control", "public,max-age=604800,must-revalidate");
+        }
+    }
+});
+
 app.UseRouting();
 
 app.UseSession();

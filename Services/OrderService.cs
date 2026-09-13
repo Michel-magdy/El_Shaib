@@ -2,40 +2,48 @@ using El_Shaib.Interfaces;
 using El_Shaib.Models;
 using El_Shaib.ViewModels;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace El_Shaib.Services;
 
 public class OrderService : IOrderService
 {
     private readonly AppDbContext _context;
+    private readonly IMemoryCache _cache;
 
-    public OrderService(AppDbContext context)
+    public OrderService(AppDbContext context, IMemoryCache cache)
     {
         _context = context;
+        _cache = cache;
     }
 
     public async Task<List<DeliveryArea>> GetDeliveryAreasAsync()
     {
-        var areas = await _context.DeliveryAreas
-            .Where(a => a.IsActive)
-            .OrderBy(a => a.Name)
-            .ToListAsync();
-
-        // If no areas configured yet in DB, provide default seeded fallback areas for Luxor
-        if (areas.Count == 0)
+        return await _cache.GetOrCreateAsync("active_delivery_areas", async entry =>
         {
-            areas = new List<DeliveryArea>
-            {
-                new() { Id = 1, Name = "مدينة الأقصر - وسط البلد", City = "الأقصر", DeliveryFee = 20m, EstimatedTime = "خلال 3 ساعات", IsActive = true },
-                new() { Id = 2, Name = "الكرنك", City = "الأقصر", DeliveryFee = 25m, EstimatedTime = "خلال 4 ساعات", IsActive = true },
-                new() { Id = 3, Name = "العوامية والعشى", City = "الأقصر", DeliveryFee = 25m, EstimatedTime = "خلال 4 ساعات", IsActive = true },
-                new() { Id = 4, Name = "البياضية", City = "الأقصر", DeliveryFee = 30m, EstimatedTime = "نفس اليوم", IsActive = true },
-                new() { Id = 5, Name = "القرنة - البر الغربي", City = "الأقصر", DeliveryFee = 35m, EstimatedTime = "نفس اليوم", IsActive = true },
-                new() { Id = 6, Name = "أرمنت", City = "الأقصر", DeliveryFee = 40m, EstimatedTime = "خلال 24 ساعة", IsActive = true }
-            };
-        }
+            entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(30);
+            var areas = await _context.DeliveryAreas
+                .AsNoTracking()
+                .Where(a => a.IsActive)
+                .OrderBy(a => a.Name)
+                .ToListAsync();
 
-        return areas;
+            // If no areas configured yet in DB, provide default seeded fallback areas for Luxor
+            if (areas.Count == 0)
+            {
+                areas = new List<DeliveryArea>
+                {
+                    new() { Id = 1, Name = "مدينة الأقصر - وسط البلد", City = "الأقصر", DeliveryFee = 20m, EstimatedTime = "خلال 3 ساعات", IsActive = true },
+                    new() { Id = 2, Name = "الكرنك", City = "الأقصر", DeliveryFee = 25m, EstimatedTime = "خلال 4 ساعات", IsActive = true },
+                    new() { Id = 3, Name = "العوامية والعشى", City = "الأقصر", DeliveryFee = 25m, EstimatedTime = "خلال 4 ساعات", IsActive = true },
+                    new() { Id = 4, Name = "البياضية", City = "الأقصر", DeliveryFee = 30m, EstimatedTime = "نفس اليوم", IsActive = true },
+                    new() { Id = 5, Name = "القرنة - البر الغربي", City = "الأقصر", DeliveryFee = 35m, EstimatedTime = "نفس اليوم", IsActive = true },
+                    new() { Id = 6, Name = "أرمنت", City = "الأقصر", DeliveryFee = 40m, EstimatedTime = "خلال 24 ساعة", IsActive = true }
+                };
+            }
+
+            return areas;
+        }) ?? new List<DeliveryArea>();
     }
 
     public async Task<DeliveryArea?> GetDeliveryAreaByIdAsync(int id)

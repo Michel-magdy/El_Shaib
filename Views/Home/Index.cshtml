@@ -83,7 +83,10 @@
             <!-- Hero Image -->
             <div class="col-lg-6 order-lg-2 order-2">
                 <div class="hero-image-wrapper">
-                    <img src="/images/HeroImage.jpg" alt="منتجات مزارع الشايب الطازجة" class="img-fluid" />
+                    <picture>
+                        <source srcset="/images/HeroImage.webp" type="image/webp" />
+                        <img src="/images/HeroImage.jpg" alt="منتجات مزارع الشايب الطازجة" class="img-fluid" width="588" height="441" fetchpriority="high" decoding="async" />
+                    </picture>
                     <div class="hero-image-badge hero-image-badge--top">
                         <i class="fas fa-sun"></i>
                         <span>جمع اليوم 06:00 صباحاً</span>
@@ -194,7 +197,12 @@
                                        class="product-image-link">
                                         <div class="product-image-wrapper">
                                             <img src="@(primaryImage?.ImageUrl ?? "/images/HeroImage.jpg")"
-                                                 alt="@(primaryImage?.AltText ?? product.Name)" />
+                                                 alt="@(primaryImage?.AltText ?? product.Name)"
+                                                 loading="lazy"
+                                                 decoding="async"
+                                                 width="280"
+                                                 height="200"
+                                                 style="object-fit: cover;" />
                                         </div>
                                     </a>
                                     <button class="product-wishlist" type="button" aria-label="إضافة إلى المفضلة">
