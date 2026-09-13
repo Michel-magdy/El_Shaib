@@ -444,6 +444,11 @@
                 const badges = document.querySelectorAll('.cart-badge');
                 let prevCount = 0;
 
+                // 0. Trigger Flying minimized product animation
+                if (window.flyToCart) {
+                    window.flyToCart(this);
+                }
+
                 // 1. Optimistic badge increment
                 badges.forEach(b => {
                     prevCount = parseInt(b.textContent) || 0;

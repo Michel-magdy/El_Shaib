@@ -382,6 +382,11 @@
                     const qtyInput = pcard ? pcard.querySelector('.qty-input') : null;
                     const quantity = qtyInput ? parseInt(qtyInput.value) || 1 : 1;
 
+                    // 0. Trigger Flying minimized product animation
+                    if (window.flyToCart) {
+                        window.flyToCart(cartBtn);
+                    }
+
                     // 1. Optimistic badge update (<16ms paint)
                     const badges = document.querySelectorAll('.cart-badge');
                     let prevCount = 0;

@@ -293,3 +293,42 @@ a:hover { color: var(--primary-dark); }
     color: #fff !important;
     transform: scale(0.98);
 }
+
+/* ========================================================
+   Fly to Cart & Product Minimize Animations
+   ======================================================== */
+.product-card-press {
+    transform: scale(0.95) !important;
+    transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+}
+
+.fly-to-cart-flying-item {
+    position: fixed;
+    z-index: 999999;
+    pointer-events: none;
+    overflow: hidden;
+    border-radius: 16px;
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.28), 0 0 0 2px rgba(255, 255, 255, 0.8);
+    background: #fff;
+    transform-origin: center center;
+    will-change: transform, opacity, border-radius, box-shadow;
+}
+
+.fly-to-cart-flying-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.cart-bounce {
+    animation: cartIconBounce 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes cartIconBounce {
+    0% { transform: scale(1); }
+    25% { transform: scale(1.4) rotate(-14deg); color: var(--accent, #74C69D); }
+    50% { transform: scale(0.88) rotate(8deg); }
+    75% { transform: scale(1.18) rotate(-4deg); }
+    100% { transform: scale(1) rotate(0deg); }
+}

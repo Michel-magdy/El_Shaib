@@ -636,6 +636,11 @@
                 const quantity = qtyInput ? parseInt(qtyInput.value) || 1 : 1;
                 const productId = @Model.Id;
 
+                // 0. Trigger Flying minimized product animation
+                if (window.flyToCart) {
+                    window.flyToCart(this);
+                }
+
                 // 1. Optimistic badge update (<16ms)
                 const badges = document.querySelectorAll('.cart-badge');
                 let prevCount = 0;
