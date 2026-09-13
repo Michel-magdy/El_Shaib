@@ -96,6 +96,8 @@ public class AuthService : IAuthService
     {
         return await _context.Orders
             .Include(o => o.Items)
+                .ThenInclude(i => i.Product)
+                    .ThenInclude(p => p.Images)
             .Where(o => o.CustomerId == customerId)
             .OrderByDescending(o => o.CreatedAt)
             .ToListAsync();

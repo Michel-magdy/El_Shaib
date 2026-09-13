@@ -46,21 +46,33 @@
                 <span class="navbar-toggler-icon"></span>
             </button>
 
+            @{
+                var currentCtrl = ViewContext.RouteData.Values["Controller"]?.ToString();
+                var currentAct = ViewContext.RouteData.Values["Action"]?.ToString();
+            }
             <!-- Nav Content -->
             <div class="collapse navbar-collapse" id="navbarMain">
                 <ul class="navbar-nav mx-auto">
                     <li class="nav-item">
-                        <a class="nav-link active" asp-controller="Home" asp-action="Index">الرئيسية</a>
+                        <a class="nav-link @(currentCtrl == "Home" && currentAct == "Index" ? "active" : "")" asp-controller="Home" asp-action="Index">الرئيسية</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" asp-controller="Product" asp-action="Index">منتجاتنا</a>
+                        <a class="nav-link @(currentCtrl == "Product" ? "active" : "")" asp-controller="Product" asp-action="Index">منتجاتنا</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" asp-controller="Home" asp-action="Index" asp-fragment="about">من نحن</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" asp-controller="Home" asp-action="ContactUs">تواصل معنا</a>
+                        <a class="nav-link @(currentCtrl == "Home" && currentAct == "ContactUs" ? "active" : "")" asp-controller="Home" asp-action="ContactUs">تواصل معنا</a>
                     </li>
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link @(currentCtrl == "Account" && currentAct == "Orders" ? "active" : "")" asp-controller="Account" asp-action="Orders">
+                                <i class="fas fa-box-archive me-1"></i> طلباتي
+                            </a>
+                        </li>
+                    }
                 </ul>
 
                 <!-- Actions -->

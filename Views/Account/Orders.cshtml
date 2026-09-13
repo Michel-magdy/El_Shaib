@@ -1,6 +1,19 @@
 @model List<El_Shaib.Models.Order>
 @{
-    ViewData["Title"] = "طلباتي السابقة";
+    ViewData["Title"] = "طلباتي - مزارع الشايب";
+
+    var orders = Model ?? new List<El_Shaib.Models.Order>();
+    var totalOrders = orders.Count;
+    var inProgressOrders = orders.Count(o => o.Status == El_Shaib.Models.OrderStatus.Pending 
+                                          || o.Status == El_Shaib.Models.OrderStatus.Confirmed 
+                                          || o.Status == El_Shaib.Models.OrderStatus.Processing);
+    var outForDeliveryOrders = orders.Count(o => o.Status == El_Shaib.Models.OrderStatus.OutForDelivery);
+    var deliveredOrders = orders.Count(o => o.Status == El_Shaib.Models.OrderStatus.Delivered);
+    var cancelledOrders = orders.Count(o => o.Status == El_Shaib.Models.OrderStatus.Cancelled 
+                                         || o.Status == El_Shaib.Models.OrderStatus.Returned);
+    var totalSpent = orders.Where(o => o.Status != El_Shaib.Models.OrderStatus.Cancelled 
+                                    && o.Status != El_Shaib.Models.OrderStatus.Returned)
+                           .Sum(o => o.Total);
 }
 
 <div class="cart-breadcrumb">
@@ -14,85 +27,365 @@
     </div>
 </div>
 
-<section class="py-5" style="background-color: #f8f9fa;">
-    <div class="container" style="max-width: 900px;">
-        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
-            <div>
-                <h1 class="h3 fw-bold mb-1" style="color: var(--primary-dark, #0d2818);">
-                    <i class="fas fa-box-archive text-success me-2"></i>
-                    سجل طلباتك
-                </h1>
-                <p class="text-muted mb-0">تابع جميع طلباتك السابقة وحالتها</p>
+<section class="py-5" style="background-color: #f8fafc;">
+    <div class="container" style="max-width: 1050px;">
+
+        <!-- Header Banner -->
+        <div class="card border-0 shadow-sm rounded-4 p-4 mb-4" style="background: linear-gradient(135deg, #1b4332 0%, #2d6a4f 100%); color: #ffffff;">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <div>
+                    <div class="d-inline-flex align-items-center gap-2 px-3 py-1 rounded-pill mb-2" style="background: rgba(255,255,255,0.15); font-size: 0.85rem;">
+                        <i class="fas fa-user-circle"></i>
+                        <span>حساب العميل: @(User.Identity?.Name ?? "عميلنا العزيز")</span>
+                    </div>
+                    <h1 class="h3 fw-bold mb-1">
+                        <i class="fas fa-box-archive me-2" style="color: #ffd166;"></i>
+                        طلباتي وإحصائيات المشتريات
+                    </h1>
+                    <p class="mb-0 text-white-50 small">
+                        تابع حالة شحناتك الحالية وتصفح سجل طلباتك السابقة من مزارع الشايب
+                    </p>
+                </div>
+                <div class="d-flex gap-2">
+                    <a asp-controller="Product" asp-action="Index" class="btn btn-light fw-bold px-4 py-2 shadow-sm rounded-pill" style="color: #1b4332;">
+                        <i class="fas fa-cart-plus me-1"></i> طلب جديد
+                    </a>
+                </div>
             </div>
-            <a asp-controller="Product" asp-action="Index" class="btn btn-outline-success">
-                <i class="fas fa-store me-1"></i> طلب جديد
-            </a>
         </div>
 
-        @if (Model == null || Model.Count == 0)
-        {
-            <div class="card border-0 shadow-sm rounded-4 p-5 text-center my-4">
-                <div class="mx-auto mb-3" style="width: 70px; height: 70px; background-color: #e8f5e9; color: var(--primary, #1b4332); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem;">
-                    <i class="fas fa-shopping-bag"></i>
+        <!-- ================= STATS DASHBOARD ================= -->
+        <div class="row g-3 mb-4">
+            <!-- Total Orders -->
+            <div class="col-6 col-md-4 col-lg">
+                <div class="card border-0 shadow-sm rounded-4 p-3 h-100 bg-white text-center">
+                    <div class="mx-auto mb-2 d-flex align-items-center justify-content-center rounded-circle"
+                         style="width: 48px; height: 48px; background-color: #e8f5e9; color: #1b4332; font-size: 1.25rem;">
+                        <i class="fas fa-boxes-stacked"></i>
+                    </div>
+                    <div class="fs-4 fw-bold text-dark mb-0">@totalOrders</div>
+                    <small class="text-muted fw-semibold">إجمالي الطلبات</small>
                 </div>
-                <h3 class="h5 fw-bold mb-2">لا توجد طلبات سابقة حتى الآن</h3>
-                <p class="text-muted mb-4">لم تقم بإجراء أي طلبات حتى الآن. استمتع بتصفح منتجاتنا الطازجة واطلب الآن!</p>
+            </div>
+
+            <!-- In Progress / Pending -->
+            <div class="col-6 col-md-4 col-lg">
+                <div class="card border-0 shadow-sm rounded-4 p-3 h-100 bg-white text-center">
+                    <div class="mx-auto mb-2 d-flex align-items-center justify-content-center rounded-circle"
+                         style="width: 48px; height: 48px; background-color: #fffbeb; color: #d97706; font-size: 1.25rem;">
+                        <i class="fas fa-clock-rotate-left"></i>
+                    </div>
+                    <div class="fs-4 fw-bold text-dark mb-0">@inProgressOrders</div>
+                    <small class="text-muted fw-semibold">قيد التجهيز</small>
+                </div>
+            </div>
+
+            <!-- Out For Delivery -->
+            <div class="col-6 col-md-4 col-lg">
+                <div class="card border-0 shadow-sm rounded-4 p-3 h-100 bg-white text-center">
+                    <div class="mx-auto mb-2 d-flex align-items-center justify-content-center rounded-circle"
+                         style="width: 48px; height: 48px; background-color: #f0f9ff; color: #0284c7; font-size: 1.25rem;">
+                        <i class="fas fa-truck-fast"></i>
+                    </div>
+                    <div class="fs-4 fw-bold text-dark mb-0">@outForDeliveryOrders</div>
+                    <small class="text-muted fw-semibold">في الطريق إليك</small>
+                </div>
+            </div>
+
+            <!-- Delivered -->
+            <div class="col-6 col-md-6 col-lg">
+                <div class="card border-0 shadow-sm rounded-4 p-3 h-100 bg-white text-center">
+                    <div class="mx-auto mb-2 d-flex align-items-center justify-content-center rounded-circle"
+                         style="width: 48px; height: 48px; background-color: #ecfdf5; color: #10b981; font-size: 1.25rem;">
+                        <i class="fas fa-circle-check"></i>
+                    </div>
+                    <div class="fs-4 fw-bold text-dark mb-0">@deliveredOrders</div>
+                    <small class="text-muted fw-semibold">تم التوصيل</small>
+                </div>
+            </div>
+
+            <!-- Total Spent -->
+            <div class="col-12 col-md-6 col-lg">
+                <div class="card border-0 shadow-sm rounded-4 p-3 h-100 bg-white text-center" style="border-right: 4px solid #1b4332 !important;">
+                    <div class="mx-auto mb-2 d-flex align-items-center justify-content-center rounded-circle"
+                         style="width: 48px; height: 48px; background-color: #fef3c7; color: #b45309; font-size: 1.25rem;">
+                        <i class="fas fa-wallet"></i>
+                    </div>
+                    <div class="fs-4 fw-bold text-success mb-0">@totalSpent.ToString("0.00") <small class="fs-6 text-muted">ج.م</small></div>
+                    <small class="text-muted fw-semibold">إجمالي المشتريات</small>
+                </div>
+            </div>
+        </div>
+
+        @if (totalOrders == 0)
+        {
+            <!-- Empty State -->
+            <div class="card border-0 shadow-sm rounded-4 p-5 text-center my-4 bg-white">
+                <div class="mx-auto mb-3" style="width: 80px; height: 80px; background-color: #e8f5e9; color: #1b4332; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.25rem;">
+                    <i class="fas fa-basket-shopping"></i>
+                </div>
+                <h2 class="h4 fw-bold mb-2" style="color: #1b4332;">لا توجد طلبات سابقة حتى الآن</h2>
+                <p class="text-muted mb-4 mx-auto" style="max-width: 480px;">
+                    لم تقم بتسجيل أي طلب بعد. تصفح منتجات مزارع الشايب من البيض الطازج والمنتجات الطبيعية وتمتع بتجربة توصيل سريعة ومميزة!
+                </p>
                 <div>
-                    <a asp-controller="Product" asp-action="Index" class="btn btn-success btn-lg px-4" style="background-color: var(--primary, #1b4332); border: none;">
-                        تسوق المنتجات
+                    <a asp-controller="Product" asp-action="Index" class="btn btn-success btn-lg px-5 py-3 rounded-pill fw-bold shadow-sm" style="background-color: #1b4332; border: none;">
+                        <i class="fas fa-store me-1"></i> تسوق المنتجات الآن
                     </a>
                 </div>
             </div>
         }
         else
         {
-            <div class="d-flex flex-column gap-3">
-                @foreach (var order in Model)
+            <!-- Quick Filter Bar -->
+            <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+                <div class="d-flex gap-2 flex-wrap" id="orderFilterButtons">
+                    <button type="button" class="btn btn-sm btn-outline-success active rounded-pill px-3 py-1 filter-btn" data-filter="all">
+                        الكل <span class="badge bg-secondary ms-1">@totalOrders</span>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-success rounded-pill px-3 py-1 filter-btn" data-filter="in-progress">
+                        قيد التنفيذ <span class="badge bg-warning text-dark ms-1">@(inProgressOrders + outForDeliveryOrders)</span>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-success rounded-pill px-3 py-1 filter-btn" data-filter="delivered">
+                        المكتملة <span class="badge bg-success ms-1">@deliveredOrders</span>
+                    </button>
+                    @if (cancelledOrders > 0)
+                    {
+                        <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1 filter-btn" data-filter="cancelled">
+                            الملغية <span class="badge bg-danger ms-1">@cancelledOrders</span>
+                        </button>
+                    }
+                </div>
+                <small class="text-muted">عرض @totalOrders طلب</small>
+            </div>
+
+            <!-- Orders List -->
+            <div class="d-flex flex-column gap-4" id="ordersContainer">
+                @foreach (var order in orders)
                 {
-                    <div class="card border-0 shadow-sm rounded-3 p-4 bg-white">
-                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 pb-3 border-bottom mb-3">
-                            <div>
-                                <strong class="fs-5" style="color: var(--primary, #1b4332);">@order.OrderNumber</strong>
-                                <small class="text-muted d-block">بتاريخ: @order.CreatedAt.ToLocalTime().ToString("yyyy/MM/dd - hh:mm tt")</small>
-                            </div>
-                            <div class="d-flex align-items-center gap-2">
-                                <span class="badge bg-warning text-dark px-3 py-2">
-                                    @(order.Status switch
+                    var statusGroup = order.Status switch
+                    {
+                        El_Shaib.Models.OrderStatus.Pending => "in-progress",
+                        El_Shaib.Models.OrderStatus.Confirmed => "in-progress",
+                        El_Shaib.Models.OrderStatus.Processing => "in-progress",
+                        El_Shaib.Models.OrderStatus.OutForDelivery => "in-progress",
+                        El_Shaib.Models.OrderStatus.Delivered => "delivered",
+                        El_Shaib.Models.OrderStatus.Cancelled => "cancelled",
+                        El_Shaib.Models.OrderStatus.Returned => "cancelled",
+                        _ => "all"
+                    };
+
+                    <div class="card border-0 shadow-sm rounded-4 bg-white overflow-hidden order-item-card" data-status-group="@statusGroup">
+                        <!-- Card Header -->
+                        <div class="p-3 p-md-4 border-bottom bg-light bg-opacity-50">
+                            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                                <div>
+                                    <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+                                        <span class="badge rounded-pill bg-dark px-3 py-2 fs-6">
+                                            <i class="fas fa-hashtag text-warning me-1"></i>@order.OrderNumber
+                                        </span>
+                                        <span class="text-muted small">
+                                            <i class="far fa-calendar-alt me-1"></i>
+                                            @order.CreatedAt.ToLocalTime().ToString("yyyy/MM/dd - hh:mm tt")
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="d-flex align-items-center gap-2 flex-wrap">
+                                    @switch (order.Status)
                                     {
-                                        El_Shaib.Models.OrderStatus.Pending => "قيد المراجعة",
-                                        El_Shaib.Models.OrderStatus.Confirmed => "تم التأكيد",
-                                        El_Shaib.Models.OrderStatus.Processing => "قيد التجهيز",
-                                        El_Shaib.Models.OrderStatus.OutForDelivery => "في الطريق للتوصيل",
-                                        El_Shaib.Models.OrderStatus.Delivered => "تم التوصيل",
-                                        El_Shaib.Models.OrderStatus.Cancelled => "ملغي",
-                                        _ => "قيد المعالجة"
-                                    })
-                                </span>
-                                <a asp-controller="Order" asp-action="Track" asp-route-orderNumber="@order.OrderNumber" class="btn btn-sm btn-outline-secondary">
-                                    <i class="fas fa-search-location me-1"></i> تتبع
-                                </a>
+                                        case El_Shaib.Models.OrderStatus.Pending:
+                                            <span class="badge bg-warning text-dark px-3 py-2 rounded-pill">
+                                                <i class="fas fa-clock me-1"></i> قيد المراجعة
+                                            </span>
+                                            break;
+                                        case El_Shaib.Models.OrderStatus.Confirmed:
+                                            <span class="badge bg-info text-dark px-3 py-2 rounded-pill">
+                                                <i class="fas fa-check-circle me-1"></i> تم التأكيد
+                                            </span>
+                                            break;
+                                        case El_Shaib.Models.OrderStatus.Processing:
+                                            <span class="badge bg-primary text-white px-3 py-2 rounded-pill">
+                                                <i class="fas fa-spinner fa-spin-pulse me-1"></i> قيد التجهيز بالمزرعة
+                                            </span>
+                                            break;
+                                        case El_Shaib.Models.OrderStatus.OutForDelivery:
+                                            <span class="badge text-white px-3 py-2 rounded-pill" style="background-color: #0284c7;">
+                                                <i class="fas fa-truck-fast me-1"></i> في الطريق للتوصيل
+                                            </span>
+                                            break;
+                                        case El_Shaib.Models.OrderStatus.Delivered:
+                                            <span class="badge bg-success text-white px-3 py-2 rounded-pill">
+                                                <i class="fas fa-check-double me-1"></i> تم التوصيل بنجاح
+                                            </span>
+                                            break;
+                                        case El_Shaib.Models.OrderStatus.Cancelled:
+                                            <span class="badge bg-danger text-white px-3 py-2 rounded-pill">
+                                                <i class="fas fa-ban me-1"></i> ملغي
+                                            </span>
+                                            break;
+                                        case El_Shaib.Models.OrderStatus.Returned:
+                                            <span class="badge bg-secondary text-white px-3 py-2 rounded-pill">
+                                                <i class="fas fa-undo me-1"></i> مرتجع
+                                            </span>
+                                            break;
+                                    }
+
+                                    <a asp-controller="Order" asp-action="Track" asp-route-orderNumber="@order.OrderNumber" class="btn btn-sm btn-outline-success rounded-pill px-3">
+                                        <i class="fas fa-map-location-dot me-1"></i> تتبع الطلب
+                                    </a>
+                                </div>
                             </div>
                         </div>
 
-                        <div class="row g-2 align-items-center">
-                            <div class="col-md-8">
-                                <small class="text-muted d-block mb-1">المنتجات:</small>
-                                <ul class="list-unstyled mb-0 small">
-                                    @foreach (var item in order.Items)
+                        <!-- Card Body: Products -->
+                        <div class="p-3 p-md-4">
+                            <div class="row g-4">
+                                <div class="col-lg-7 border-start-lg">
+                                    <h6 class="fw-bold mb-3 text-muted" style="font-size: 0.9rem;">
+                                        <i class="fas fa-boxes-packing text-success me-1"></i> المنتجات المطلوبة (@order.Items.Count منتج):
+                                    </h6>
+                                    <div class="d-flex flex-column gap-2">
+                                        @foreach (var item in order.Items)
+                                        {
+                                            <div class="d-flex align-items-center justify-content-between p-2 rounded-3 bg-light bg-opacity-75">
+                                                <div class="d-flex align-items-center gap-2">
+                                                    @{
+                                                        var prodImg = item.Product?.Images?.FirstOrDefault(i => i.IsPrimary)?.ImageUrl 
+                                                                   ?? item.Product?.Images?.FirstOrDefault()?.ImageUrl;
+                                                    }
+                                                    @if (!string.IsNullOrEmpty(prodImg))
+                                                    {
+                                                        <img src="@prodImg" alt="@item.ProductName" class="rounded-2" style="width: 44px; height: 44px; object-fit: cover;" onerror="this.src='/images/Logo.jpg'" />
+                                                    }
+                                                    else
+                                                    {
+                                                        <div class="rounded-2 d-flex align-items-center justify-content-center" style="width: 44px; height: 44px; background: #e8f5e9; color: #1b4332;">
+                                                            <i class="fas fa-egg"></i>
+                                                        </div>
+                                                    }
+                                                    <div>
+                                                        <div class="fw-bold small text-dark">@item.ProductName</div>
+                                                        <small class="text-muted">الكمية: <strong>@item.Quantity</strong> × @item.UnitPrice.ToString("0.00") ج.م</small>
+                                                    </div>
+                                                </div>
+                                                <div class="fw-bold text-dark small">
+                                                    @item.TotalPrice.ToString("0.00") ج.م
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+
+                                    @if (!string.IsNullOrEmpty(order.Notes))
                                     {
-                                        <li>• @item.ProductName (الكمية: @item.Quantity)</li>
+                                        <div class="mt-3 p-2 rounded bg-warning bg-opacity-10 border border-warning border-opacity-25 small text-muted">
+                                            <i class="fas fa-comment-dots me-1 text-warning"></i> <strong>ملاحظاتك:</strong> @order.Notes
+                                        </div>
                                     }
-                                </ul>
-                            </div>
-                            <div class="col-md-4 text-md-end">
-                                <small class="text-muted d-block">الإجمالي النهائي:</small>
-                                <strong class="fs-5 text-success">@order.Total.ToString("0.00") ج.م</strong>
+                                </div>
+
+                                <!-- Card Metadata & Financials -->
+                                <div class="col-lg-5">
+                                    <div class="bg-light p-3 rounded-3 mb-3">
+                                        <h6 class="fw-bold mb-2 text-muted" style="font-size: 0.85rem;">تفاصيل التوصيل والدفع</h6>
+                                        <div class="small mb-1">
+                                            <i class="fas fa-map-marker-alt text-danger me-1"></i>
+                                            <strong>العنوان:</strong> @(string.IsNullOrWhiteSpace(order.DeliveryAddress) ? "غير محدد" : order.DeliveryAddress)
+                                        </div>
+                                        @if (!string.IsNullOrWhiteSpace(order.DeliveryPhone))
+                                        {
+                                            <div class="small mb-1">
+                                                <i class="fas fa-phone-alt text-success me-1"></i>
+                                                <strong>الهاتف:</strong> <span dir="ltr">@order.DeliveryPhone</span>
+                                            </div>
+                                        }
+                                        <div class="small mb-1">
+                                            <i class="fas fa-credit-card text-primary me-1"></i>
+                                            <strong>طريقة الدفع:</strong> 
+                                            @(order.PaymentMethod switch
+                                            {
+                                                El_Shaib.Models.PaymentMethod.CashOnDelivery => "الدفع عند الاستلام",
+                                                El_Shaib.Models.PaymentMethod.Online => "دفع إلكتروني (بطاقة بنكية)",
+                                                El_Shaib.Models.PaymentMethod.BankTransfer => "تحويل بنكي",
+                                                _ => "الدفع عند الاستلام"
+                                            })
+                                        </div>
+                                        <div class="small">
+                                            <i class="fas fa-receipt text-secondary me-1"></i>
+                                            <strong>حالة الدفع:</strong> 
+                                            <span class="badge @(order.PaymentStatus == El_Shaib.Models.PaymentStatus.Paid ? "bg-success" : "bg-warning text-dark")">
+                                                @(order.PaymentStatus switch
+                                                {
+                                                    El_Shaib.Models.PaymentStatus.Paid => "تم السداد",
+                                                    El_Shaib.Models.PaymentStatus.Pending => "قيد الانتظار",
+                                                    El_Shaib.Models.PaymentStatus.Failed => "فشل السداد",
+                                                    El_Shaib.Models.PaymentStatus.Refunded => "مسترد",
+                                                    _ => "قيد الانتظار"
+                                                })
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Price Breakdown -->
+                                    <div class="d-flex justify-content-between small text-muted mb-1">
+                                        <span>قيمة المنتجات:</span>
+                                        <span>@order.SubTotal.ToString("0.00") ج.م</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between small text-muted mb-1">
+                                        <span>مصاريف التوصيل:</span>
+                                        <span>@(order.DeliveryFee > 0 ? order.DeliveryFee.ToString("0.00") + " ج.م" : "مجاناً")</span>
+                                    </div>
+                                    @if (order.Discount > 0)
+                                    {
+                                        <div class="d-flex justify-content-between small text-danger mb-1">
+                                            <span>الخصم:</span>
+                                            <span>-@order.Discount.ToString("0.00") ج.م</span>
+                                        </div>
+                                    }
+                                    <div class="d-flex justify-content-between fw-bold fs-5 pt-2 border-top mt-2" style="color: #1b4332;">
+                                        <span>الإجمالي:</span>
+                                        <span>@order.Total.ToString("0.00") ج.م</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 }
             </div>
         }
+
     </div>
 </section>
 
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const filterButtons = document.querySelectorAll('.filter-btn');
+            const orderCards = document.querySelectorAll('.order-item-card');
+
+            filterButtons.forEach(btn => {
+                btn.addEventListener('click', function () {
+                    filterButtons.forEach(b => {
+                        b.classList.remove('active');
+                        b.classList.remove('btn-success');
+                        b.classList.add('btn-outline-success');
+                    });
+
+                    this.classList.add('active');
+                    this.classList.remove('btn-outline-success');
+                    this.classList.add('btn-success');
+
+                    const filter = this.getAttribute('data-filter');
+
+                    orderCards.forEach(card => {
+                        if (filter === 'all') {
+                            card.style.display = '';
+                        } else {
+                            const group = card.getAttribute('data-status-group');
+                            card.style.display = (group === filter) ? '' : 'none';
+                        }
+                    });
+                });
+            });
+        });
+    </script>
+}
