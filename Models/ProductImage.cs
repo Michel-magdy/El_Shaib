@@ -7,8 +7,14 @@ public class ProductImage
 {
     public int Id { get; set; }
 
-    [Required(ErrorMessage = "must provide an Image Link"), MaxLength(500)]
-    public string ImageUrl { get; set; }
+    [MaxLength(500)]
+    public string ImageUrl { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Relative path/key inside the Supabase Storage bucket (e.g. products/filename.jpg)
+    /// </summary>
+    [MaxLength(500)]
+    public string? StoragePath { get; set; }
 
     [MaxLength(200)]
     public string? AltText { get; set; }
@@ -22,4 +28,3 @@ public class ProductImage
     // Navigation
     public Product? Product { get; set; }
 }
-

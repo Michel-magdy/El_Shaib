@@ -1,4 +1,3 @@
-using System;
 using El_Shaib.Interfaces;
 using El_Shaib.Models;
 using Microsoft.EntityFrameworkCore;
@@ -10,49 +9,19 @@ public class GenericService<T> : IGenericService<T> where T : class
     protected readonly AppDbContext context;
     protected readonly DbSet<T> entity;
 
-
-    public GenericService(AppDbContext _context)
+    public GenericService(AppDbContext context)
     {
-        this.context = _context;
+        this.context = context;
         this.entity = context.Set<T>();
     }
 
-    public virtual void Add(T entity)
-    {
-        this.entity.Add(entity);
-        context.SaveChanges();
-    }
-
-    public void Delete(int id)
-    {
-        var Obj = GetById(id);
-        if (Obj != null)
-        {
-            entity.Remove(Obj);
-            context.SaveChanges();
-        }
-        return;
-    }
-
-
     public virtual async Task<List<T>> GetAllAsync()
     {
-        return entity.ToList();
+        return await entity.ToListAsync();
     }
 
-    public virtual T? GetById(int id)
+    public virtual async Task<T?> GetByIdAsync(int id)
     {
-        return entity.Find(id);
-    }
-
-    public async Task<T?> GetByIdAsync(int id)
-    {
-        return entity.Find(id);
-    }
-
-    public void Update(T entity)
-    {
-        this.entity.Update(entity);
-        context.SaveChanges();
+        return await entity.FindAsync(id);
     }
 }

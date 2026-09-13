@@ -714,6 +714,7 @@ a {
 }
 
 .product-card {
+    position: relative;
     background-color: var(--white);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-lg);
@@ -727,6 +728,29 @@ a {
 .product-card:hover {
     box-shadow: var(--shadow-md);
     transform: translateY(-4px);
+}
+
+.product-image-link {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+}
+
+.product-name-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+
+.product-name-link:hover .product-name {
+    color: var(--primary-dark);
+}
+
+.product-card > .product-wishlist {
+    position: absolute;
+    top: 0.75rem;
+    left: 0.75rem;
+    z-index: 2;
 }
 
 .product-image-wrapper {

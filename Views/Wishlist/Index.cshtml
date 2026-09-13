@@ -1,0 +1,165 @@
+@model List<El_Shaib.Models.Product>
+@{
+    ViewData["Title"] = "قائمة المفضلة";
+}
+
+<link rel="stylesheet" href="~/css/products.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/cart.css" asp-append-version="true" />
+
+<div class="cart-breadcrumb">
+    <div class="container">
+        <nav aria-label="مسار التنقل">
+            <ol class="breadcrumb-list">
+                <li><a asp-controller="Home" asp-action="Index"><i class="fas fa-home"></i> الرئيسية</a></li>
+                <li class="active"><i class="fas fa-chevron-left breadcrumb-sep"></i> <span>المفضلة</span></li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<section class="py-5" style="background-color: #f8f9fa;">
+    <div class="container">
+        <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+            <div>
+                <h1 class="h3 fw-bold mb-1" style="color: var(--primary-dark, #0d2818);">
+                    <i class="fas fa-heart text-danger me-2"></i>
+                    منتجاتك المفضلة
+                </h1>
+                <p class="text-muted mb-0">جميع المنتجات التي حفظتها للرجوع إليها وشرائها لاحقاً</p>
+            </div>
+            <a asp-controller="Product" asp-action="Index" class="btn btn-outline-success">
+                <i class="fas fa-store me-1"></i> تصفح المزيد من المنتجات
+            </a>
+        </div>
+
+        @if (Model == null || Model.Count == 0)
+        {
+            <div class="card border-0 shadow-sm rounded-4 p-5 text-center my-4">
+                <div class="mx-auto mb-3" style="width: 70px; height: 70px; background-color: #ffebee; color: #e53935; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem;">
+                    <i class="far fa-heart"></i>
+                </div>
+                <h3 class="h5 fw-bold mb-2">قائمة المفضلة فارغة حالياً</h3>
+                <p class="text-muted mb-4">لم تقم بإضافة أي منتجات إلى المفضلة بعد. تصفح منتجاتنا الطازجة وأضف ما يعجبك!</p>
+                <div>
+                    <a asp-controller="Product" asp-action="Index" class="btn btn-success btn-lg px-4" style="background-color: var(--primary, #1b4332); border: none;">
+                        تسوق الآن
+                    </a>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="row g-4">
+                @foreach (var product in Model)
+                {
+                    var primaryImage = product.Images?.FirstOrDefault(img => img.IsPrimary)
+                        ?? product.Images?.FirstOrDefault();
+
+                    <div class="col-xl-3 col-lg-4 col-md-6 wishlist-item" data-product-id="@product.Id">
+                        <div class="pcard h-100 d-flex flex-column justify-content-between">
+                            <div>
+                                <div class="pcard-image position-relative">
+                                    <a asp-controller="Product" asp-action="Details" asp-route-id="@product.Id">
+                                        <img src="@(primaryImage?.ImageUrl ?? "/images/HeroImage.jpg")"
+                                             alt="@(primaryImage?.AltText ?? product.Name)" loading="lazy" />
+                                    </a>
+                                    <button class="btn btn-danger btn-sm position-absolute top-0 end-0 m-2 rounded-circle btn-remove-wishlist"
+                                            data-product-id="@product.Id" title="حذف من المفضلة" style="width: 32px; height: 32px; padding: 0;">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                                <div class="pcard-body">
+                                    @if (!string.IsNullOrEmpty(product.PackageType) || !string.IsNullOrEmpty(product.UnitSize))
+                                    {
+                                        <span class="pcard-category">@(product.PackageType ?? product.UnitSize)</span>
+                                    }
+                                    <h3 class="pcard-title">
+                                        <a asp-controller="Product" asp-action="Details" asp-route-id="@product.Id">
+                                            @product.Name
+                                        </a>
+                                    </h3>
+                                    <div class="pcard-price-row mb-3">
+                                        <div class="pcard-price">
+                                            <span class="price-val">@product.Price.ToString("0.00")</span>
+                                            <span class="price-curr">ج.م</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="p-3 pt-0">
+                                <button class="btn btn-success w-100 py-2 fw-bold btn-add-cart-from-wishlist" data-product-id="@product.Id" style="background-color: var(--primary, #1b4332); border: none;">
+                                    <i class="fas fa-cart-plus me-1"></i> أضف للسلة
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        // Remove from wishlist
+        document.querySelectorAll('.btn-remove-wishlist').forEach(btn => {
+            btn.addEventListener('click', async function () {
+                const productId = this.dataset.productId;
+                const item = this.closest('.wishlist-item');
+
+                item.style.opacity = '0';
+                item.style.transform = 'scale(0.9)';
+
+                try {
+                    const formData = new FormData();
+                    formData.append('productId', productId);
+                    const res = await fetch('/Wishlist/Toggle', { method: 'POST', body: formData });
+                    const data = await res.json();
+                    if (data.success) {
+                        setTimeout(() => {
+                            item.remove();
+                            if (document.querySelectorAll('.wishlist-item').length === 0) {
+                                location.reload();
+                            }
+                        }, 300);
+                        if (window.showToast) window.showToast(data.message, 'success');
+                    }
+                } catch (err) {
+                    console.error('Error removing from wishlist:', err);
+                    item.style.opacity = '1';
+                    item.style.transform = '';
+                }
+            });
+        });
+
+        // Add to cart from wishlist
+        document.querySelectorAll('.btn-add-cart-from-wishlist').forEach(btn => {
+            btn.addEventListener('click', async function () {
+                const productId = this.dataset.productId;
+                this.disabled = true;
+                const orig = this.innerHTML;
+                this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الإضافة...';
+
+                try {
+                    const formData = new FormData();
+                    formData.append('productId', productId);
+                    formData.append('quantity', 1);
+
+                    const res = await fetch('/Cart/Add', { method: 'POST', body: formData });
+                    const data = await res.json();
+                    if (data.success) {
+                        document.querySelectorAll('.cart-badge').forEach(b => b.textContent = data.totalCount);
+                        if (window.showToast) window.showToast(data.message, 'success');
+                    }
+                } catch (err) {
+                    console.error('Error adding to cart:', err);
+                } finally {
+                    this.disabled = false;
+                    this.innerHTML = orig;
+                }
+            });
+        });
+    </script>
+}
+

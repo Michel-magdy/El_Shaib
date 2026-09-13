@@ -1,4 +1,9 @@
-﻿<section class="contact-section" id="contact">
+@model El_Shaib.Models.ContactMessage
+@{
+    ViewData["Title"] = "تواصل معنا";
+}
+
+<section class="contact-section py-5" id="contact">
     <div class="container text-center">
         <p class="section-subtitle mb-1">نسعد بتواصلكم</p>
         <h2 class="section-title">تواصل معنا مباشرة</h2>
@@ -6,46 +11,102 @@
             نحن هنا لخدمتكم والإجابة على جميع استفساراتكم. تواصلوا معنا بالطريقة المناسبة لكم
         </p>
 
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="alert alert-success shadow-sm my-4 text-center p-3 rounded-3" style="max-width: 700px; margin: 0 auto;">
+                <i class="fas fa-check-circle fs-4 me-2"></i>
+                @TempData["SuccessMessage"]
+            </div>
+        }
+
+        <!-- Contact Info Cards -->
         <div class="row g-4 mt-2 justify-content-center">
             <div class="col-lg-3 col-md-6">
-                <div class="contact-card">
-                    <div class="contact-icon">
+                <div class="contact-card p-4 border rounded-3 shadow-sm bg-white h-100">
+                    <div class="contact-icon text-success fs-2 mb-3">
                         <i class="fas fa-phone-alt"></i>
                     </div>
                     <h5>اتصل بنا</h5>
-                    <p><a href="tel:+966500000000" dir="ltr">+966 50 000 0000</a></p>
+                    <p class="mb-0"><a href="tel:+201000003000" dir="ltr" class="text-decoration-none text-dark fw-bold">+20 100 000 3000</a></p>
                 </div>
             </div>
 
             <div class="col-lg-3 col-md-6">
-                <div class="contact-card">
-                    <div class="contact-icon">
-                        <i class="fab fa-whatsapp" style="color: #25D366;"></i>
+                <div class="contact-card p-4 border rounded-3 shadow-sm bg-white h-100">
+                    <div class="contact-icon fs-2 mb-3" style="color: #25D366;">
+                        <i class="fab fa-whatsapp"></i>
                     </div>
                     <h5>واتساب</h5>
-                    <p><a href="https://wa.me/966500000000" dir="ltr">+966 50 000 0000</a></p>
+                    <p class="mb-0"><a href="https://wa.me/201000003000" target="_blank" dir="ltr" class="text-decoration-none text-dark fw-bold">+20 100 000 3000</a></p>
                 </div>
             </div>
 
             <div class="col-lg-3 col-md-6">
-                <div class="contact-card">
-                    <div class="contact-icon">
+                <div class="contact-card p-4 border rounded-3 shadow-sm bg-white h-100">
+                    <div class="contact-icon text-primary fs-2 mb-3">
                         <i class="fas fa-envelope"></i>
                     </div>
                     <h5>البريد الإلكتروني</h5>
-                    <p><a href="mailto:info@elshaib.com">info&#64;elshaib.com</a></p>
+                    <p class="mb-0"><a href="mailto:info@elshaib.com" class="text-decoration-none text-dark fw-bold">info@elshaib.com</a></p>
                 </div>
             </div>
 
             <div class="col-lg-3 col-md-6">
-                <div class="contact-card">
-                    <div class="contact-icon">
+                <div class="contact-card p-4 border rounded-3 shadow-sm bg-white h-100">
+                    <div class="contact-icon text-danger fs-2 mb-3">
                         <i class="fas fa-map-marker-alt"></i>
                     </div>
                     <h5>موقعنا</h5>
-                    <p>منطقة القصيم، المملكة العربية السعودية</p>
+                    <p class="mb-0 text-muted">الأقصر - طريق المطار، مصر</p>
                 </div>
             </div>
         </div>
+
+        <!-- Contact Form Card -->
+        <div class="card border-0 shadow-sm rounded-4 mt-5 text-start p-4 p-md-5" style="max-width: 800px; margin: 2rem auto 0;">
+            <h3 class="h4 fw-bold mb-3 text-center" style="color: var(--primary, #1b4332);">أرسل لنا رسالة</h3>
+            <p class="text-muted text-center mb-4">اكتب استفسارك أو طلبك الخاص وسيقوم فريق خدمة العملاء بالتواصل معك</p>
+
+            <form method="post" asp-controller="Home" asp-action="ContactUs">
+                @Html.AntiForgeryToken()
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="Name" class="form-label fw-semibold">الاسم <span class="text-danger">*</span></label>
+                        <input asp-for="Name" class="form-control form-control-lg" placeholder="أدخل اسمك" required />
+                        <span asp-validation-for="Name" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="Email" class="form-label fw-semibold">البريد الإلكتروني <span class="text-danger">*</span></label>
+                        <input asp-for="Email" class="form-control form-control-lg" dir="ltr" placeholder="example@domain.com" required />
+                        <span asp-validation-for="Email" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="Phone" class="form-label fw-semibold">رقم الهاتف للتواصل</label>
+                        <input asp-for="Phone" class="form-control form-control-lg" dir="ltr" placeholder="010XXXXXXXX" />
+                        <span asp-validation-for="Phone" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="Subject" class="form-label fw-semibold">موضوع الرسالة <span class="text-danger">*</span></label>
+                        <input asp-for="Subject" class="form-control form-control-lg" placeholder="مثال: استفسار عن توريد تجاري" required />
+                        <span asp-validation-for="Subject" class="text-danger small"></span>
+                    </div>
+                    <div class="col-12">
+                        <label asp-for="Message" class="form-label fw-semibold">الرسالة <span class="text-danger">*</span></label>
+                        <textarea asp-for="Message" class="form-control" rows="5" placeholder="اكتب تفاصيل استفسارك هنا..." required></textarea>
+                        <span asp-validation-for="Message" class="text-danger small"></span>
+                    </div>
+                    <div class="col-12 text-center mt-4">
+                        <button type="submit" class="btn btn-success btn-lg px-5 py-3 fw-bold shadow-sm" style="background-color: var(--primary, #1b4332); border: none;">
+                            <i class="fas fa-paper-plane me-2"></i>
+                            إرسال الرسالة
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
     </div>
 </section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

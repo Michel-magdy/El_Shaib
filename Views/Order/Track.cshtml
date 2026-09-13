@@ -1,0 +1,146 @@
+@model El_Shaib.ViewModels.OrderConfirmationViewModel?
+@{
+    ViewData["Title"] = "تتبع الطلب";
+}
+
+<section class="py-5" style="background-color: #f8f9fa;">
+    <div class="container" style="max-width: 850px;">
+        <div class="text-center mb-5">
+            <h1 class="h3 fw-bold mb-2" style="color: var(--primary-dark, #0d2818);">تتبع حالة طلبك</h1>
+            <p class="text-muted">أدخل رقم الطلب لمعرفة حالته وموعد وصوله التقريبي</p>
+
+            <!-- Search Form -->
+            <form method="get" asp-controller="Order" asp-action="Track" class="d-flex gap-2 mx-auto mt-4" style="max-width: 500px;">
+                <input type="text" name="orderNumber" class="form-control form-control-lg" placeholder="مثال: SHP-20260913-1234" value="@Context.Request.Query["orderNumber"]" required />
+                <button type="submit" class="btn btn-success btn-lg px-4" style="background-color: var(--primary, #1b4332); border: none;">
+                    <i class="fas fa-search me-1"></i> تتبع
+                </button>
+            </form>
+        </div>
+
+        @if (ViewBag.ErrorMessage != null)
+        {
+            <div class="alert alert-warning text-center shadow-sm p-4 rounded-3 mb-4">
+                <i class="fas fa-exclamation-circle fs-3 text-warning mb-2 d-block"></i>
+                @ViewBag.ErrorMessage
+            </div>
+        }
+
+        @if (Model != null)
+        {
+            <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 mb-4">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4 pb-3 border-bottom">
+                    <div>
+                        <small class="text-muted d-block">رقم الطلب:</small>
+                        <h4 class="fw-bold mb-0" style="color: var(--primary, #1b4332);">@Model.OrderNumber</h4>
+                    </div>
+                    <div class="text-end">
+                        <small class="text-muted d-block">تاريخ الطلب:</small>
+                        <span class="fw-semibold">@Model.CreatedAt.ToLocalTime().ToString("yyyy/MM/dd - hh:mm tt")</span>
+                    </div>
+                </div>
+
+                <!-- Step Tracker -->
+                <div class="py-4 my-2">
+                    <div class="d-flex justify-content-between position-relative text-center">
+                        @{
+                            var statusInt = (int)Model.Status;
+                        }
+                        <!-- Step 1: Pending -->
+                        <div class="d-flex flex-column align-items-center" style="z-index: 2; width: 20%;">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center mb-2 @(statusInt >= 0 ? "bg-success text-white" : "bg-light text-muted border")" style="width: 44px; height: 44px;">
+                                <i class="fas fa-check"></i>
+                            </div>
+                            <small class="fw-bold">تم الاستلام</small>
+                        </div>
+
+                        <!-- Step 2: Confirmed -->
+                        <div class="d-flex flex-column align-items-center" style="z-index: 2; width: 20%;">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center mb-2 @(statusInt >= 1 ? "bg-success text-white" : "bg-light text-muted border")" style="width: 44px; height: 44px;">
+                                <i class="fas fa-thumbs-up"></i>
+                            </div>
+                            <small class="fw-bold">تم التأكيد</small>
+                        </div>
+
+                        <!-- Step 3: Processing -->
+                        <div class="d-flex flex-column align-items-center" style="z-index: 2; width: 20%;">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center mb-2 @(statusInt >= 2 ? "bg-success text-white" : "bg-light text-muted border")" style="width: 44px; height: 44px;">
+                                <i class="fas fa-box-open"></i>
+                            </div>
+                            <small class="fw-bold">قيد التجهيز</small>
+                        </div>
+
+                        <!-- Step 4: OutForDelivery -->
+                        <div class="d-flex flex-column align-items-center" style="z-index: 2; width: 20%;">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center mb-2 @(statusInt >= 3 ? "bg-success text-white" : "bg-light text-muted border")" style="width: 44px; height: 44px;">
+                                <i class="fas fa-truck"></i>
+                            </div>
+                            <small class="fw-bold">في الطريق</small>
+                        </div>
+
+                        <!-- Step 5: Delivered -->
+                        <div class="d-flex flex-column align-items-center" style="z-index: 2; width: 20%;">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center mb-2 @(statusInt >= 4 ? "bg-success text-white" : "bg-light text-muted border")" style="width: 44px; height: 44px;">
+                                <i class="fas fa-home"></i>
+                            </div>
+                            <small class="fw-bold">تم التوصيل</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Customer Details -->
+                <div class="bg-light rounded-3 p-4 my-4 text-start">
+                    <div class="row g-3">
+                        <div class="col-sm-6">
+                            <small class="text-muted d-block">الاسم:</small>
+                            <strong>@Model.CustomerName</strong>
+                        </div>
+                        <div class="col-sm-6">
+                            <small class="text-muted d-block">الهاتف:</small>
+                            <span dir="ltr">@Model.Phone</span>
+                        </div>
+                        <div class="col-12">
+                            <small class="text-muted d-block">عنوان التوصيل:</small>
+                            <span>@Model.DeliveryAddress</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Products Table -->
+                <h6 class="fw-bold mb-3 text-start">المنتجات المطلوبة:</h6>
+                <div class="table-responsive">
+                    <table class="table table-borderless text-start align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>المنتج</th>
+                                <th class="text-center">الكمية</th>
+                                <th class="text-end">الإجمالي</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.Items)
+                            {
+                                <tr class="border-bottom">
+                                    <td>@item.ProductName</td>
+                                    <td class="text-center">@item.Quantity</td>
+                                    <td class="text-end fw-bold">@item.TotalPrice.ToString("0.00") ج.م</td>
+                                </tr>
+                            }
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="2" class="text-end text-muted pt-3">رسوم التوصيل:</td>
+                                <td class="text-end pt-3">@(Model.DeliveryFee == 0 ? "مجاني" : Model.DeliveryFee.ToString("0.00") + " ج.م")</td>
+                            </tr>
+                            <tr class="fw-bold fs-5">
+                                <td colspan="2" class="text-end">الإجمالي:</td>
+                                <td class="text-end text-success">@Model.Total.ToString("0.00") ج.م</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        }
+    </div>
+</section>
+

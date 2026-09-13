@@ -1,0 +1,114 @@
+@model El_Shaib.ViewModels.OrderConfirmationViewModel
+@{
+    ViewData["Title"] = "تم استلام طلبك بنجاح";
+}
+
+<section class="py-5" style="background-color: #f8f9fa;">
+    <div class="container" style="max-width: 800px;">
+        <div class="card border-0 shadow rounded-4 p-4 p-md-5 text-center mb-4">
+            <!-- Success Icon -->
+            <div class="mx-auto mb-4" style="width: 80px; height: 80px; background-color: #e8f5e9; color: #2e7d32; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.5rem;">
+                <i class="fas fa-check"></i>
+            </div>
+
+            <h1 class="h3 fw-bold mb-2" style="color: var(--primary-dark, #0d2818);">شكراً لك! تم استلام طلبك بنجاح</h1>
+            <p class="text-muted mb-4">سيتواصل معك فريق مزارع الشايب لتأكيد الطلب وتجهيزه للشحن خلال دقائق.</p>
+
+            <!-- Order Number Banner -->
+            <div class="p-3 mb-4 rounded-3 d-flex align-items-center justify-content-between flex-wrap gap-2" style="background-color: #f1f8f5; border: 1px dashed var(--primary, #1b4332);">
+                <div class="text-start">
+                    <small class="text-muted d-block">رقم الطلب:</small>
+                    <strong class="fs-5" style="color: var(--primary, #1b4332);" id="orderNumberTxt">@Model.OrderNumber</strong>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-success" onclick="navigator.clipboard.writeText('@Model.OrderNumber'); alert('تم نسخ رقم الطلب!');">
+                    <i class="fas fa-copy me-1"></i> نسخ الرقم
+                </button>
+            </div>
+
+            <!-- Details Card -->
+            <div class="text-start bg-light p-4 rounded-3 mb-4">
+                <div class="row g-3">
+                    <div class="col-sm-6">
+                        <small class="text-muted d-block">اسم العميل:</small>
+                        <strong>@Model.CustomerName</strong>
+                    </div>
+                    <div class="col-sm-6">
+                        <small class="text-muted d-block">رقم الهاتف:</small>
+                        <strong dir="ltr">@Model.Phone</strong>
+                    </div>
+                    <div class="col-12">
+                        <small class="text-muted d-block">عنوان التوصيل:</small>
+                        <span>@Model.DeliveryAddress</span>
+                    </div>
+                    <div class="col-sm-6">
+                        <small class="text-muted d-block">طريقة الدفع:</small>
+                        <strong>@(Model.PaymentMethod == El_Shaib.Models.PaymentMethod.CashOnDelivery ? "الدفع عند الاستلام" : "تحويل بنكي")</strong>
+                    </div>
+                    <div class="col-sm-6">
+                        <small class="text-muted d-block">حالة الطلب:</small>
+                        <span class="badge bg-warning text-dark px-3 py-2">قيد المراجعة</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Items Ordered -->
+            <h5 class="fw-bold text-start mb-3" style="color: var(--primary, #1b4332);">تفاصيل المنتجات:</h5>
+            <div class="table-responsive mb-4">
+                <table class="table table-borderless text-start align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>المنتج</th>
+                            <th class="text-center">الكمية</th>
+                            <th class="text-end">السعر</th>
+                            <th class="text-end">الإجمالي</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.Items)
+                        {
+                            <tr class="border-bottom">
+                                <td>@item.ProductName</td>
+                                <td class="text-center">@item.Quantity</td>
+                                <td class="text-end">@item.UnitPrice.ToString("0.00") ج.م</td>
+                                <td class="text-end fw-bold">@item.TotalPrice.ToString("0.00") ج.م</td>
+                            </tr>
+                        }
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="3" class="text-end text-muted pt-3">المجموع الفرعي:</td>
+                            <td class="text-end pt-3">@Model.SubTotal.ToString("0.00") ج.م</td>
+                        </tr>
+                        <tr>
+                            <td colspan="3" class="text-end text-muted">رسوم التوصيل:</td>
+                            <td class="text-end text-success">@(Model.DeliveryFee == 0 ? "مجاني" : Model.DeliveryFee.ToString("0.00") + " ج.م")</td>
+                        </tr>
+                        <tr class="fw-bold fs-5">
+                            <td colspan="3" class="text-end" style="color: var(--primary, #1b4332);">الإجمالي النهائي:</td>
+                            <td class="text-end text-primary" style="color: var(--primary, #1b4332) !important;">@Model.Total.ToString("0.00") ج.م</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <!-- Actions -->
+            <div class="d-flex flex-column flex-sm-row justify-content-center gap-3">
+                <a href="https://wa.me/201000003000?text=@Uri.EscapeDataString($"مرحباً مزارع الشايب، أود الاستفسار عن طلبي رقم: {Model.OrderNumber}")"
+                   target="_blank"
+                   class="btn btn-success btn-lg px-4 py-3 d-flex align-items-center justify-content-center gap-2">
+                    <i class="fab fa-whatsapp fs-5"></i>
+                    متابعة الطلب عبر واتساب
+                </a>
+                <a asp-controller="Order" asp-action="Track" asp-route-orderNumber="@Model.OrderNumber"
+                   class="btn btn-outline-secondary btn-lg px-4 py-3">
+                    <i class="fas fa-search-location me-2"></i>
+                    تتبع حالة الطلب
+                </a>
+                <a asp-controller="Home" asp-action="Index" class="btn btn-light btn-lg px-4 py-3">
+                    العودة للرئيسية
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+

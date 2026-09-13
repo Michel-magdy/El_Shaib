@@ -1,0 +1,65 @@
+@model El_Shaib.ViewModels.LoginViewModel
+@{
+    ViewData["Title"] = "تسجيل الدخول";
+}
+
+<section class="py-5" style="background-color: #f8f9fa;">
+    <div class="container" style="max-width: 500px;">
+        <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 bg-white">
+            <div class="text-center mb-4">
+                <div class="mx-auto mb-3" style="width: 64px; height: 64px; background: #e8f5e9; color: var(--primary, #1b4332); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.75rem;">
+                    <i class="fas fa-user-lock"></i>
+                </div>
+                <h1 class="h4 fw-bold mb-1" style="color: var(--primary-dark, #0d2818);">تسجيل الدخول</h1>
+                <p class="text-muted small">أهلاً بك مجدداً في متجر مزارع الشايب</p>
+            </div>
+
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="alert alert-danger shadow-sm small py-2 px-3 mb-3">
+                    <div asp-validation-summary="All"></div>
+                </div>
+            }
+
+            <form method="post" asp-controller="Account" asp-action="Login">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="ReturnUrl" />
+
+                <div class="mb-3">
+                    <label asp-for="EmailOrPhone" class="form-label fw-semibold">البريد الإلكتروني أو رقم الهاتف</label>
+                    <input asp-for="EmailOrPhone" class="form-control form-control-lg" placeholder="example@domain.com أو 010XXXXXXXX" required autofocus />
+                    <span asp-validation-for="EmailOrPhone" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Password" class="form-label fw-semibold">كلمة المرور</label>
+                    <input asp-for="Password" class="form-control form-control-lg" placeholder="••••••••" required />
+                    <span asp-validation-for="Password" class="text-danger small"></span>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div class="form-check">
+                        <input class="form-check-input ms-0 me-2" type="checkbox" asp-for="RememberMe" id="rememberMe">
+                        <label class="form-check-label small" for="rememberMe">تذكرني</label>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-success btn-lg w-100 py-3 fw-bold shadow-sm mb-3" style="background-color: var(--primary, #1b4332); border: none;">
+                    تسجيل الدخول
+                </button>
+
+                <div class="text-center">
+                    <span class="text-muted small">ليس لديك حساب بعد؟ </span>
+                    <a asp-controller="Account" asp-action="Register" asp-route-returnUrl="@Model.ReturnUrl" class="fw-bold text-decoration-none" style="color: var(--primary, #1b4332);">
+                        إنشاء حساب جديد
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
+

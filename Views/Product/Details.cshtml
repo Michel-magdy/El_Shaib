@@ -620,6 +620,71 @@
                 icon.classList.toggle('fas');
                 this.classList.toggle('pd-wishlist-btn--active');
             });
+
+            // ===== Add to Cart & Buy Now =====
+            const addCartBtn = document.querySelector('.pd-add-cart-btn');
+            const buyNowBtn = document.querySelector('.pd-buy-now-btn');
+
+            addCartBtn?.addEventListener('click', async function () {
+                const qtyInput = document.getElementById('pdQtyInput');
+                const quantity = qtyInput ? parseInt(qtyInput.value) || 1 : 1;
+                const productId = @Model.Id;
+
+                this.disabled = true;
+                const orig = this.innerHTML;
+                this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الإضافة...';
+
+                try {
+                    const formData = new FormData();
+                    formData.append('productId', productId);
+                    formData.append('quantity', quantity);
+
+                    const res = await fetch('/Cart/Add', { method: 'POST', body: formData });
+                    const data = await res.json();
+                    if (data.success) {
+                        document.querySelectorAll('.cart-badge').forEach(b => b.textContent = data.totalCount);
+                        if (window.showToast) window.showToast(data.message, 'success');
+                        else alert(data.message);
+                    } else {
+                        if (window.showToast) window.showToast(data.message, 'error');
+                        else alert(data.message);
+                    }
+                } catch (err) {
+                    console.error('Add to cart failed:', err);
+                } finally {
+                    this.disabled = false;
+                    this.innerHTML = orig;
+                }
+            });
+
+            buyNowBtn?.addEventListener('click', async function () {
+                const qtyInput = document.getElementById('pdQtyInput');
+                const quantity = qtyInput ? parseInt(qtyInput.value) || 1 : 1;
+                const productId = @Model.Id;
+
+                this.disabled = true;
+                this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التحويل...';
+
+                try {
+                    const formData = new FormData();
+                    formData.append('productId', productId);
+                    formData.append('quantity', quantity);
+
+                    const res = await fetch('/Cart/Add', { method: 'POST', body: formData });
+                    const data = await res.json();
+                    if (data.success) {
+                        window.location.href = '/Cart';
+                    } else {
+                        this.disabled = false;
+                        this.innerHTML = '<i class="fas fa-bolt"></i> اشتري الآن';
+                        if (window.showToast) window.showToast(data.message, 'error');
+                    }
+                } catch (err) {
+                    console.error('Buy now failed:', err);
+                    this.disabled = false;
+                    this.innerHTML = '<i class="fas fa-bolt"></i> اشتري الآن';
+                }
+            });
         </script>
     }
 

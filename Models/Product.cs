@@ -8,7 +8,6 @@ public class Product
     public int Id { get; set; }
 
     [Required, MaxLength(200)]
-    [Display(Name = "Product Name")]
     public string Name { get; set; } = string.Empty;
 
     [MaxLength(1000)]
@@ -27,9 +26,7 @@ public class Product
     [Column(TypeName = "decimal(10,2)")]
     public decimal? OldPrice { get; set; }
 
-    [Display(Name = "Quantity")]
     public int StockQuantity { get; set; }
-
 
     public bool IsFeatured { get; set; }
 
@@ -43,8 +40,8 @@ public class Product
 
     // Navigation
     public Category? Category { get; set; } = null!;
-    // public List<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
-    // public List<CartItem> CartItems { get; set; } = new List<CartItem>();
-    // public List<Wishlist> Wishlists { get; set; } = new List<Wishlist>();
-    public List<ProductImage> Images { get; set; } = new List<ProductImage>();
+    public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
+    public ICollection<CartItem> CartItems { get; set; } = new List<CartItem>();
+    public ICollection<Wishlist> Wishlists { get; set; } = new List<Wishlist>();
+    public ICollection<ProductImage> Images { get; set; } = new List<ProductImage>();
 }

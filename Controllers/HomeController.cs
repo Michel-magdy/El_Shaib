@@ -7,22 +7,48 @@ namespace El_Shaib.Controllers;
 
 public class HomeController : Controller
 {
-    IProductService productService;
+    private readonly IProductService _productService;
+    private readonly AppDbContext _context;
 
-    public HomeController(IProductService productService)
+    public HomeController(IProductService productService, AppDbContext context)
     {
-        this.productService = productService;
+        _productService = productService;
+        _context = context;
     }
 
     public async Task<IActionResult> Index()
     {
-        var Products = await productService.GetAllAsync();
-        return View(Products);
+        var products = await _productService.GetAllAsync();
+        return View(products);
     }
 
     public IActionResult Privacy()
     {
         return View();
+    }
+
+    [HttpGet]
+    public IActionResult ContactUs()
+    {
+        return View();
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ContactUs(ContactMessage model)
+    {
+        if (!ModelState.IsValid)
+        {
+            return View(model);
+        }
+
+        model.CreatedAt = DateTime.UtcNow;
+        model.IsRead = false;
+        _context.ContactMessages.Add(model);
+        await _context.SaveChangesAsync();
+
+        TempData["SuccessMessage"] = "شكراً لتواصلك معنا! تم إرسال رسالتك بنجاح وسيقوم فريق مزارع الشايب بالرد عليك في أقرب وقت.";
+        return RedirectToAction(nameof(ContactUs));
     }
 
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]

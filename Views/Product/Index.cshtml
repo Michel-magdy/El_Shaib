@@ -1,4 +1,4 @@
-@model List<Product>
+@model El_Shaib.ViewModels.ProductListViewModel
 @{
     ViewData["Title"] = "المنتجات";
 }
@@ -11,7 +11,7 @@
     <div class="container">
         <div class="subnav-links">
             <a asp-controller="Home" asp-action="Index" class="subnav-link">الرئيسية</a>
-            <a href="#" class="subnav-link active">المنتجات</a>
+            <span class="subnav-link active">المنتجات</span>
         </div>
         <div class="subnav-badge">
             <i class="fas fa-store"></i>
@@ -36,11 +36,11 @@
             <div class="products-hero-badges">
                 <span class="phero-badge">
                     <i class="fas fa-check-circle"></i>
-                    نكبر أول ١٠٠٪
+                    طبيعي ١٠٠٪
                 </span>
                 <span class="phero-badge">
                     <i class="fas fa-clock"></i>
-                    خلال 24 ساعة
+                    توصيل خلال 24 ساعة
                 </span>
             </div>
         </div>
@@ -50,79 +50,87 @@
 <!-- ========== SEARCH & FILTER BAR ========== -->
 <section class="products-filter-section">
     <div class="container">
-        <!-- Search Row -->
-        <div class="products-search-row">
-            <div class="products-search-box">
-                <i class="fas fa-search search-icon"></i>
-                <input type="text" placeholder="ابحث عن كرتونة بيض، بيض أحمر أو بلدي أو أبيض..." />
-            </div>
-            <div class="products-sort-dropdown">
-                <select>
-                    <option>ترتيب حسب: الأكثر مبيعاً</option>
-                    <option>الأقل سعراً</option>
-                    <option>الأعلى سعراً</option>
-                    <option>الأحدث</option>
-                </select>
-                <i class="fas fa-chevron-down"></i>
-            </div>
-        </div>
+        <form method="get" asp-controller="Product" asp-action="Index" id="catalogFilterForm">
+            <input type="hidden" name="CategoryId" value="@Model.SelectedCategoryId" id="hiddenCategoryId" />
+            <input type="hidden" name="Page" value="1" id="hiddenPage" />
 
-        <!-- Category Filter Tags -->
-        <div class="products-filter-tags">
-            <span class="filter-tag-label">
-                <i class="fas fa-filter"></i>
-                الكل
-            </span>
-            <a href="#" class="filter-tag active">كل المنتجات</a>
-            <a href="#" class="filter-tag">بيض مزارع طازج</a>
-            <a href="#" class="filter-tag">بيض أبيض</a>
-            <a href="#" class="filter-tag">بيض أحمر</a>
-            <a href="#" class="filter-tag">بيض بلدي</a>
-            <a href="#" class="filter-tag">
-                <i class="fas fa-box"></i>
-                كرتونة (30 بيضة)
-            </a>
-            <a href="#" class="filter-tag">
-                <i class="fas fa-boxes-stacked"></i>
-                6 كرتونات جملة (معبأ)
-            </a>
-            <a href="#" class="filter-tag">
-                <i class="fas fa-cubes"></i>
-                صندوق بيض (توريد تجاري)
-            </a>
-        </div>
+            <!-- Search Row -->
+            <div class="products-search-row">
+                <div class="products-search-box">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" name="Query" value="@Model.Query" placeholder="ابحث عن كرتونة بيض، بيض أحمر أو بلدي أو أبيض..." />
+                </div>
+                <div class="products-sort-dropdown">
+                    <select name="SortBy" onchange="this.form.submit()">
+                        <option value="popular" selected="@(Model.SelectedSort == "popular")">ترتيب حسب: الأكثر طلباً</option>
+                        <option value="price_asc" selected="@(Model.SelectedSort == "price_asc")">الأقل سعراً</option>
+                        <option value="price_desc" selected="@(Model.SelectedSort == "price_desc")">الأعلى سعراً</option>
+                        <option value="newest" selected="@(Model.SelectedSort == "newest")">الأحدث</option>
+                    </select>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+            </div>
 
-        <!-- Active Filters / Results Info -->
-        <div class="products-results-info">
-            <span class="results-count">
-                <i class="fas fa-th-large"></i>
-                @(Model?.Count ?? 0) منتج متوفر
-            </span>
-            <span class="results-filter-active">
-                <i class="fas fa-check-circle"></i>
-                كل المنتجات
-            </span>
-        </div>
+            <!-- Category Filter Tags -->
+            <div class="products-filter-tags">
+                <span class="filter-tag-label">
+                    <i class="fas fa-filter"></i>
+                    التصنيف:
+                </span>
+                <a asp-controller="Product" asp-action="Index"
+                   asp-route-Query="@Model.Query"
+                   asp-route-SortBy="@Model.SelectedSort"
+                   class="filter-tag @(!Model.SelectedCategoryId.HasValue ? "active" : "")">
+                    كل المنتجات
+                </a>
+                @foreach (var cat in Model.Categories)
+                {
+                    <a asp-controller="Product" asp-action="Index"
+                       asp-route-CategoryId="@cat.Id"
+                       asp-route-Query="@Model.Query"
+                       asp-route-SortBy="@Model.SelectedSort"
+                       class="filter-tag @(Model.SelectedCategoryId == cat.Id ? "active" : "")">
+                        @cat.Name
+                    </a>
+                }
+            </div>
+
+            <!-- Active Filters / Results Info -->
+            <div class="products-results-info">
+                <span class="results-count">
+                    <i class="fas fa-th-large"></i>
+                    @Model.TotalCount منتج متوفر
+                </span>
+                <span class="results-filter-active">
+                    <i class="fas fa-check-circle"></i>
+                    @(Model.CurrentCategory?.Name ?? "كل المنتجات")
+                </span>
+            </div>
+        </form>
     </div>
 </section>
 
 <!-- ========== PRODUCTS GRID ========== -->
 <section class="products-grid-section">
     <div class="container">
-        @if (Model == null || Model.Count == 0)
+        @if (Model.Products == null || Model.Products.Count == 0)
         {
             <div class="products-empty">
                 <div class="empty-icon">
                     <i class="fas fa-egg"></i>
                 </div>
-                <h3>لا توجد منتجات متاحة حالياً</h3>
-                <p>سيتم إضافة المنتجات قريباً. تابعنا للحصول على أحدث العروض.</p>
+                <h3>لا توجد منتجات مطابقة للبحث</h3>
+                <p>لم نجد أي منتجات تطابق معايير البحث الحالية. جرب تغيير كلمة البحث أو تصفح كل المنتجات.</p>
+                <a asp-controller="Product" asp-action="Index" class="btn btn-primary-custom mt-3">
+                    <i class="fas fa-undo me-2"></i>
+                    عرض كل المنتجات
+                </a>
             </div>
         }
         else
         {
             <div class="row g-4">
-                @foreach (var product in Model)
+                @foreach (var product in Model.Products)
                 {
                     var primaryImage = product.Images?.FirstOrDefault(img => img.IsPrimary)
                         ?? product.Images?.FirstOrDefault();
@@ -132,12 +140,14 @@
                         : 0;
 
                     <div class="col-xl-3 col-lg-4 col-md-6">
-                        <div class="pcard">
+                        <div class="pcard" data-product-id="@product.Id">
                             <!-- Product Image -->
                             <div class="pcard-image">
-                                <img src="@(primaryImage?.ImageUrl ?? "/images/HeroImage.jpg")"
-                                     alt="@(primaryImage?.AltText ?? product.Name)" loading="lazy" />
-                                
+                                <a asp-controller="Product" asp-action="Details" asp-route-id="@product.Id">
+                                    <img src="@(primaryImage?.ImageUrl ?? "/images/HeroImage.jpg")"
+                                         alt="@(primaryImage?.AltText ?? product.Name)" loading="lazy" />
+                                </a>
+
                                 <!-- Badges -->
                                 <div class="pcard-badges">
                                     @if (product.Category != null)
@@ -155,80 +165,109 @@
                                 </div>
 
                                 <!-- Wishlist -->
-                                <button class="pcard-wishlist" type="button" aria-label="إضافة إلى المفضلة">
+                                <button class="pcard-wishlist btn-wishlist-toggle" type="button" data-product-id="@product.Id" aria-label="إضافة إلى المفضلة">
                                     <i class="far fa-heart"></i>
                                 </button>
                             </div>
 
-                            <!-- Product Info -->
+                            <!-- Product Body -->
                             <div class="pcard-body">
                                 @if (!string.IsNullOrEmpty(product.PackageType) || !string.IsNullOrEmpty(product.UnitSize))
                                 {
-                                    <span class="pcard-type">@(product.PackageType ?? product.UnitSize)</span>
-                                }
-                                
-                                <h5 class="pcard-name">@product.Name</h5>
-                                
-                                @if (!string.IsNullOrEmpty(product.Description))
-                                {
-                                    <p class="pcard-desc">@product.Description</p>
+                                    <span class="pcard-category">
+                                        @(product.PackageType ?? product.UnitSize)
+                                    </span>
                                 }
 
-                                <!-- Price Row -->
+                                <h3 class="pcard-title">
+                                    <a asp-controller="Product" asp-action="Details" asp-route-id="@product.Id">
+                                        @product.Name
+                                    </a>
+                                </h3>
+
                                 <div class="pcard-price-row">
-                                    <div class="pcard-price-group">
-                                        <span class="pcard-price">@product.Price.ToString("0")</span>
-                                        <span class="pcard-currency">ج.م</span>
+                                    <div class="pcard-price">
+                                        <span class="price-val">@product.Price.ToString("0.00")</span>
+                                        <span class="price-curr">ج.م</span>
                                     </div>
                                     @if (hasDiscount)
                                     {
-                                        <span class="pcard-old-price">@product.OldPrice!.Value.ToString("0") ج.م</span>
+                                        <span class="pcard-old-price">@product.OldPrice!.Value.ToString("0.00") ج.م</span>
                                     }
                                 </div>
 
-                                <!-- Quantity & Add to Cart -->
+                                <!-- Actions -->
                                 <div class="pcard-actions">
                                     <div class="pcard-qty">
-                                        <button class="qty-btn qty-minus" type="button" aria-label="أقل">
+                                        <button class="qty-btn qty-minus" type="button" aria-label="تقليل الكمية">
                                             <i class="fas fa-minus"></i>
                                         </button>
-                                        <input type="number" class="qty-input" value="1" min="1" max="99" />
-                                        <button class="qty-btn qty-plus" type="button" aria-label="أكثر">
+                                        <input type="number" class="qty-input" value="1" min="1" max="@(product.StockQuantity > 0 ? product.StockQuantity : 99)" />
+                                        <button class="qty-btn qty-plus" type="button" aria-label="زيادة الكمية">
                                             <i class="fas fa-plus"></i>
                                         </button>
                                     </div>
-                                    <span class="pcard-basket-label">
-                                        <i class="fas fa-cart-plus"></i>
-                                        أضف للسلة
-                                    </span>
+
+                                    <button class="pcard-basket btn-add-cart-ajax" type="button" data-product-id="@product.Id" title="أضف للسلة">
+                                        <span class="pcard-basket-label">
+                                            <i class="fas fa-cart-plus"></i>
+                                            أضف للسلة
+                                        </span>
+                                    </button>
                                 </div>
 
-                                <button class="pcard-add-btn" type="button">
-                                    <i class="fas fa-shopping-cart me-1"></i>
-                                    اطلب الآن
-                                </button>
+                                <div class="d-flex gap-2 mt-2">
+                                    <a asp-controller="Product" asp-action="Details" asp-route-id="@product.Id" class="btn btn-outline-secondary btn-sm flex-fill" type="button">
+                                        تفاصيل أكثر
+                                    </a>
+                                </div>
                             </div>
                         </div>
                     </div>
                 }
             </div>
 
-            <!-- Pagination (if needed) -->
-            @if (Model.Count > 8)
+            <!-- Pagination -->
+            @if (Model.TotalPages > 1)
             {
                 <div class="products-pagination">
                     <nav aria-label="التنقل بين الصفحات">
                         <ul class="pagination justify-content-center">
-                            <li class="page-item disabled">
-                                <a class="page-link" href="#" aria-label="السابق">
+                            <li class="page-item @(Model.CurrentPage <= 1 ? "disabled" : "")">
+                                <a class="page-link"
+                                   asp-controller="Product"
+                                   asp-action="Index"
+                                   asp-route-Page="@(Model.CurrentPage - 1)"
+                                   asp-route-CategoryId="@Model.SelectedCategoryId"
+                                   asp-route-Query="@Model.Query"
+                                   asp-route-SortBy="@Model.SelectedSort"
+                                   aria-label="السابق">
                                     <i class="fas fa-chevron-right"></i>
                                 </a>
                             </li>
-                            <li class="page-item active"><a class="page-link" href="#">١</a></li>
-                            <li class="page-item"><a class="page-link" href="#">٢</a></li>
-                            <li class="page-item"><a class="page-link" href="#">٣</a></li>
-                            <li class="page-item">
-                                <a class="page-link" href="#" aria-label="التالي">
+                            @for (int p = 1; p <= Model.TotalPages; p++)
+                            {
+                                <li class="page-item @(p == Model.CurrentPage ? "active" : "")">
+                                    <a class="page-link"
+                                       asp-controller="Product"
+                                       asp-action="Index"
+                                       asp-route-Page="@p"
+                                       asp-route-CategoryId="@Model.SelectedCategoryId"
+                                       asp-route-Query="@Model.Query"
+                                       asp-route-SortBy="@Model.SelectedSort">
+                                        @p
+                                    </a>
+                                </li>
+                            }
+                            <li class="page-item @(Model.CurrentPage >= Model.TotalPages ? "disabled" : "")">
+                                <a class="page-link"
+                                   asp-controller="Product"
+                                   asp-action="Index"
+                                   asp-route-Page="@(Model.CurrentPage + 1)"
+                                   asp-route-CategoryId="@Model.SelectedCategoryId"
+                                   asp-route-Query="@Model.Query"
+                                   asp-route-SortBy="@Model.SelectedSort"
+                                   aria-label="التالي">
                                     <i class="fas fa-chevron-left"></i>
                                 </a>
                             </li>
@@ -244,27 +283,23 @@
 <section class="products-guarantee">
     <div class="container">
         <div class="row align-items-center">
-            <!-- Text Content -->
             <div class="col-lg-6 order-lg-2">
                 <div class="guarantee-content">
                     <div class="guarantee-badge">
                         <i class="fas fa-shield-alt"></i>
-                        منتج محلي صناعي | الشايب - الأقصر
+                        إنتاج محلي طازج | الشايب - الأقصر
                     </div>
                     <h2>
-                        نقاء، أمان، وطراجة
+                        نقاء، أمان، وجودة
                         <br />مضمونة حتى باب
                         <br />بيتك
                     </h2>
                     <p>
-                        جميع منتجاتنا طبيعية ومختلفة
-                        الشراكة وتصنيف في مزارعنا
-                        الخاصة، ونعمل على ضبط وتنظيم
-                        المنتجات والحفاظ على جودة البيض.
+                        جميع منتجاتنا طبيعية ١٠٠٪ يتم جمعها وفحصها يومياً في مزارعنا
+                        الخاصة لضمان تقديم أعلى درجات الجودة والنظافة الغذائية.
                     </p>
                 </div>
             </div>
-            <!-- Feature Cards -->
             <div class="col-lg-6 order-lg-1">
                 <div class="guarantee-cards">
                     <div class="guarantee-card">
@@ -320,14 +355,49 @@
             });
         });
 
-        // Filter tags active toggle
-        document.querySelectorAll('.filter-tag').forEach(tag => {
-            tag.addEventListener('click', function (e) {
-                e.preventDefault();
-                document.querySelectorAll('.filter-tag').forEach(t => t.classList.remove('active'));
-                this.classList.add('active');
+        // AJAX Add to Cart
+        document.querySelectorAll('.btn-add-cart-ajax').forEach(btn => {
+            btn.addEventListener('click', async function () {
+                const pcard = this.closest('.pcard');
+                const productId = this.dataset.productId;
+                const qtyInput = pcard.querySelector('.qty-input');
+                const quantity = qtyInput ? parseInt(qtyInput.value) || 1 : 1;
+
+                this.disabled = true;
+                const originalHtml = this.innerHTML;
+                this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الإضافة...';
+
+                try {
+                    const formData = new FormData();
+                    formData.append('productId', productId);
+                    formData.append('quantity', quantity);
+
+                    const res = await fetch('/Cart/Add', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        document.querySelectorAll('.cart-badge').forEach(b => b.textContent = data.totalCount);
+                        if (window.showToast) {
+                            window.showToast(data.message, 'success');
+                        } else {
+                            alert(data.message);
+                        }
+                    } else {
+                        if (window.showToast) {
+                            window.showToast(data.message, 'error');
+                        } else {
+                            alert(data.message);
+                        }
+                    }
+                } catch (err) {
+                    console.error('Add to cart failed:', err);
+                } finally {
+                    this.disabled = false;
+                    this.innerHTML = originalHtml;
+                }
             });
         });
     </script>
 }
-

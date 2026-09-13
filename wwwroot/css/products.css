@@ -383,6 +383,7 @@
    PRODUCT CARD (pcard)
    =================================== */
 .pcard {
+    position: relative;
     background-color: var(--white);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-lg);
@@ -400,11 +401,25 @@
 }
 
 /* Card Image */
+.pcard-image-link {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+}
+
 .pcard-image {
     position: relative;
     overflow: hidden;
     aspect-ratio: 4 / 3;
     background-color: var(--light-gray);
+}
+
+/* Wishlist - positioned on the card level */
+.pcard .pcard-wishlist {
+    position: absolute;
+    top: 0.75rem;
+    left: 0.75rem;
+    z-index: 2;
 }
 
 .pcard-image img {
@@ -625,23 +640,66 @@
     font-size: 0.8rem;
 }
 
-/* Add to Cart Button */
+/* Product Name Link */
+.pcard-name-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+
+.pcard-name-link:hover .pcard-name {
+    color: var(--primary-dark);
+}
+
+/* Bottom Actions Row */
+.pcard-bottom-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.25rem;
+}
+
+/* Details Button */
+.pcard-details-btn {
+    flex: 1;
+    padding: 0.55rem;
+    background-color: transparent;
+    color: var(--primary-dark);
+    border: 1.5px solid var(--primary-dark);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-family);
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-decoration: none;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3rem;
+    transition: var(--transition);
+}
+
+.pcard-details-btn:hover {
+    background-color: var(--primary-dark);
+    color: var(--white);
+}
+
+/* Add to Cart / Order Button */
 .pcard-add-btn {
-    width: 100%;
+    flex: 1;
     padding: 0.55rem;
     background-color: var(--primary-dark);
     color: var(--white);
     border: none;
     border-radius: var(--radius-sm);
     font-family: var(--font-family);
-    font-size: 0.82rem;
+    font-size: 0.78rem;
     font-weight: 700;
     cursor: pointer;
     transition: var(--transition);
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.4rem;
+    gap: 0.3rem;
 }
 
 .pcard-add-btn:hover {

@@ -34,12 +34,12 @@
                         </a>
                     </div>
 
-                    <div class="hero-search">
-                        <input type="text" placeholder="ابحث عن منتجات طازجة..." />
-                        <span class="search-icon">
+                    <form method="get" asp-controller="Product" asp-action="Index" class="hero-search">
+                        <input type="text" name="Query" placeholder="ابحث عن منتجات طازجة..." />
+                        <button type="submit" class="search-icon" style="background:none; border:none; cursor:pointer;">
                             <i class="fas fa-search"></i>
-                        </span>
-                    </div>
+                        </button>
+                    </form>
                     @* 
                     <p class="hero-promo-text">
                         <i class="fas fa-truck me-1" style="color: #40916C;"></i>
@@ -190,18 +190,24 @@
 
                             <div class="col-lg-3 col-md-6">
                                 <div class="product-card">
-                                    <div class="product-image-wrapper">
-                                        <img src="@(primaryImage?.ImageUrl ?? "/images/HeroImage.jpg")"
-                                             alt="@(primaryImage?.AltText ?? product.Name)" />
-                                        <button class="product-wishlist" type="button" aria-label="إضافة إلى المفضلة">
-                                            <i class="far fa-heart"></i>
-                                        </button>
-                                    </div>
+                                    <a asp-controller="Product" asp-action="Details" asp-route-id="@product.Id"
+                                       class="product-image-link">
+                                        <div class="product-image-wrapper">
+                                            <img src="@(primaryImage?.ImageUrl ?? "/images/HeroImage.jpg")"
+                                                 alt="@(primaryImage?.AltText ?? product.Name)" />
+                                        </div>
+                                    </a>
+                                    <button class="product-wishlist" type="button" aria-label="إضافة إلى المفضلة">
+                                        <i class="far fa-heart"></i>
+                                    </button>
                                     <div class="product-info">
                                         <span class="product-category">
                                             @(product.PackageType ?? product.UnitSize ?? "منتج")
                                         </span>
-                                        <h5 class="product-name">@product.Name</h5>
+                                        <a asp-controller="Product" asp-action="Details" asp-route-id="@product.Id"
+                                           class="product-name-link">
+                                            <h5 class="product-name">@product.Name</h5>
+                                        </a>
                                         <p class="product-description">@product.Description</p>
                                         <div class="product-price-row">
                                             <span class="product-price">@product.Price.ToString("0.00")</span>
@@ -212,12 +218,12 @@
                                             }
                                         </div>
                                         <div class="product-actions">
-                                            <button class="btn-add-cart" type="button">
+                                            <button class="btn-add-cart btn-home-add-cart" type="button" data-product-id="@product.Id">
                                                 <i class="fas fa-cart-plus me-1"></i>
                                                 أضف للسلة
                                             </button>
-                                            <button asp-action="Details" asp-controller="Product" class="btn-details"
-                                                    type="button">تفاصيل أكثر</button>
+                                            <a asp-controller="Product" asp-action="Details" asp-route-id="@product.Id"
+                                               class="btn-details" type="button">تفاصيل أكثر</a>
                                         </div>
                                     </div>
                                 </div>
@@ -227,7 +233,7 @@
 
                     <!-- View All Link -->
                     <div class="products-view-all">
-                        <a href="#">
+                        <a asp-controller="Product" asp-action="Index">
                             عرض جميع المنتجات والأحجام المتوفرة
                             <i class="fas fa-arrow-left"></i>
                         </a>
@@ -415,3 +421,38 @@
 
         <!-- ========== CONTACT SECTION ========== -->
         @* <partial name="ContactUs" /> *@
+
+@section Scripts {
+    <script>
+        document.querySelectorAll('.btn-home-add-cart').forEach(btn => {
+            btn.addEventListener('click', async function () {
+                const productId = this.dataset.productId;
+                this.disabled = true;
+                const orig = this.innerHTML;
+                this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> أضف للسلة';
+
+                try {
+                    const formData = new FormData();
+                    formData.append('productId', productId);
+                    formData.append('quantity', 1);
+
+                    const res = await fetch('/Cart/Add', { method: 'POST', body: formData });
+                    const data = await res.json();
+                    if (data.success) {
+                        document.querySelectorAll('.cart-badge').forEach(b => b.textContent = data.totalCount);
+                        if (window.showToast) window.showToast(data.message, 'success');
+                        else alert(data.message);
+                    } else {
+                        if (window.showToast) window.showToast(data.message, 'error');
+                        else alert(data.message);
+                    }
+                } catch (err) {
+                    console.error('Home add to cart failed:', err);
+                } finally {
+                    this.disabled = false;
+                    this.innerHTML = orig;
+                }
+            });
+        });
+    </script>
+}

@@ -1,0 +1,453 @@
+@model El_Shaib.ViewModels.CartViewModel
+@{
+    ViewData["Title"] = "سلة التسوق";
+}
+
+<!-- ========== CART CSS ========== -->
+<link rel="stylesheet" href="~/css/cart.css" asp-append-version="true" />
+
+<!-- ========== BREADCRUMB ========== -->
+<div class="cart-breadcrumb">
+    <div class="container">
+        <nav aria-label="مسار التنقل">
+            <ol class="breadcrumb-list">
+                <li>
+                    <a asp-controller="Home" asp-action="Index">
+                        <i class="fas fa-home"></i>
+                        الرئيسية
+                    </a>
+                </li>
+                <li>
+                    <i class="fas fa-chevron-left breadcrumb-sep"></i>
+                    <a asp-controller="Product" asp-action="Index">المنتجات</a>
+                </li>
+                <li class="active">
+                    <i class="fas fa-chevron-left breadcrumb-sep"></i>
+                    <span>سلة التسوق</span>
+                </li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<!-- ========== CART HEADER ========== -->
+<section class="cart-header-section">
+    <div class="container">
+        <div class="cart-header-content">
+            <div class="cart-header-icon">
+                <i class="fas fa-shopping-cart"></i>
+            </div>
+            <div>
+                <h1>سلة التسوق</h1>
+                <p>
+                    <span class="cart-item-count" id="cartItemCount">@Model.TotalItemCount</span>
+                    منتج في سلتك
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ========== CART CONTENT ========== -->
+<section class="cart-content-section">
+    <div class="container">
+        @if (Model.Items.Count == 0)
+        {
+            <!-- Empty Cart State -->
+            <div class="cart-empty" id="emptyCartView">
+                <div class="cart-empty-icon">
+                    <i class="fas fa-shopping-basket"></i>
+                </div>
+                <h3>سلة التسوق فارغة</h3>
+                <p>لم تقم بإضافة أي منتجات بعد. تصفح منتجاتنا الطازجة وأضف ما يعجبك!</p>
+                <a asp-controller="Product" asp-action="Index" class="cart-empty-btn">
+                    <i class="fas fa-store me-2"></i>
+                    تصفح المنتجات
+                </a>
+            </div>
+        }
+        else
+        {
+            <div class="row g-4" id="cartActiveView">
+                <!-- ===== Cart Items Column ===== -->
+                <div class="col-lg-8">
+                    <!-- Cart Table Header (desktop) -->
+                    <div class="cart-table-header">
+                        <span class="cth-product">المنتج</span>
+                        <span class="cth-price">السعر</span>
+                        <span class="cth-qty">الكمية</span>
+                        <span class="cth-total">الإجمالي</span>
+                        <span class="cth-action"></span>
+                    </div>
+
+                    <!-- Cart Items List -->
+                    <div class="cart-items-list" id="cartItemsList">
+                        @foreach (var item in Model.Items)
+                        {
+                            <div class="cart-item" data-product-id="@item.ProductId" data-price="@item.Price">
+                                <!-- Product Info -->
+                                <div class="cart-item-product">
+                                    <a asp-controller="Product" asp-action="Details" asp-route-id="@item.ProductId"
+                                       class="cart-item-img">
+                                        <img src="@item.ImageUrl" alt="@item.AltText" loading="lazy" />
+                                    </a>
+                                    <div class="cart-item-info">
+                                        <a asp-controller="Product" asp-action="Details" asp-route-id="@item.ProductId"
+                                           class="cart-item-name">
+                                            @item.ProductName
+                                        </a>
+                                        @if (!string.IsNullOrEmpty(item.PackageType) || !string.IsNullOrEmpty(item.UnitSize))
+                                        {
+                                            <span class="cart-item-meta">
+                                                <i class="fas fa-box"></i>
+                                                @(item.PackageType ?? item.UnitSize)
+                                            </span>
+                                        }
+                                        @if (!string.IsNullOrEmpty(item.CategoryName))
+                                        {
+                                            <span class="cart-item-category">@item.CategoryName</span>
+                                        }
+                                        <span class="cart-item-price-mobile">@item.Price.ToString("0.00") ج.م</span>
+                                    </div>
+                                </div>
+
+                                <!-- Unit Price -->
+                                <div class="cart-item-price">
+                                    <span class="ci-price">@item.Price.ToString("0.00")</span>
+                                    <span class="ci-currency">ج.م</span>
+                                </div>
+
+                                <!-- Quantity -->
+                                <div class="cart-item-qty">
+                                    <div class="ci-qty">
+                                        <button class="ci-qty-btn ci-qty-minus" type="button" aria-label="تقليل الكمية">
+                                            <i class="fas fa-minus"></i>
+                                        </button>
+                                        <input type="number" class="ci-qty-input" value="@item.Quantity" min="1"
+                                               max="@(item.StockQuantity > 0 ? item.StockQuantity : 99)" />
+                                        <button class="ci-qty-btn ci-qty-plus" type="button" aria-label="زيادة الكمية">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Line Total -->
+                                <div class="cart-item-total">
+                                    <span class="ci-total-value">@item.LineTotal.ToString("0.00")</span>
+                                    <span class="ci-currency">ج.م</span>
+                                </div>
+
+                                <!-- Remove -->
+                                <div class="cart-item-remove">
+                                    <button class="ci-remove-btn" type="button" aria-label="حذف المنتج" title="حذف من السلة">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    <!-- Cart Actions Bar -->
+                    <div class="cart-actions-bar">
+                        <a asp-controller="Product" asp-action="Index" class="cart-continue-btn">
+                            <i class="fas fa-arrow-right me-2"></i>
+                            متابعة التسوق
+                        </a>
+                        <button class="cart-clear-btn" type="button" id="cartClearBtn">
+                            <i class="fas fa-trash me-1"></i>
+                            تفريغ السلة
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ===== Order Summary Column ===== -->
+                <div class="col-lg-4">
+                    <div class="cart-summary" id="cartSummary">
+                        <h4>
+                            <i class="fas fa-receipt"></i>
+                            ملخص الطلب
+                        </h4>
+
+                        <div class="cart-summary-rows">
+                            <div class="cs-row">
+                                <span>المجموع الفرعي</span>
+                                <span class="cs-value" id="csSubtotal">@Model.SubTotal.ToString("0.00") ج.م</span>
+                            </div>
+                            <div class="cs-row">
+                                <span>
+                                    <i class="fas fa-truck cs-icon"></i>
+                                    رسوم التوصيل
+                                </span>
+                                <span class="cs-value cs-delivery @(Model.IsFreeDelivery ? "cs-delivery--free" : "")" id="csDelivery">
+                                    @(Model.IsFreeDelivery ? "مجاني" : Model.DeliveryFee.ToString("0.00") + " ج.م")
+                                </span>
+                            </div>
+                            <div class="cs-row">
+                                <span>
+                                    <i class="fas fa-percentage cs-icon"></i>
+                                    الخصم
+                                </span>
+                                <span class="cs-value cs-discount" id="csDiscount">@Model.Discount.ToString("0.00") ج.م</span>
+                            </div>
+                        </div>
+
+                        <hr class="cs-divider" />
+
+                        <div class="cs-total-row">
+                            <span>الإجمالي</span>
+                            <span class="cs-total-value" id="csTotal">@Model.Total.ToString("0.00") ج.م</span>
+                        </div>
+
+                        <!-- Coupon Code -->
+                        <div class="cs-coupon">
+                            <label>هل لديك كوبون خصم؟</label>
+                            <div class="cs-coupon-input-group">
+                                <input type="text" placeholder="أدخل كود الخصم" id="csCouponInput" />
+                                <button type="button" id="csCouponBtn">تطبيق</button>
+                            </div>
+                        </div>
+
+                        <hr class="cs-divider" />
+
+                        <!-- Checkout Button -->
+                        <a asp-controller="Checkout" asp-action="Index" class="cs-checkout-btn text-center text-decoration-none">
+                            <i class="fas fa-lock me-2"></i>
+                            إتمام الطلب
+                        </a>
+
+                        <!-- Payment Methods -->
+                        <div class="cs-payment-methods">
+                            <span>طرق الدفع المتاحة:</span>
+                            <div class="cs-payment-icons">
+                                <span title="الدفع عند الاستلام">
+                                    <i class="fas fa-money-bill-wave"></i>
+                                </span>
+                                <span title="تحويل بنكي">
+                                    <i class="fas fa-university"></i>
+                                </span>
+                                <span title="فيزا / ماستر كارد">
+                                    <i class="fab fa-cc-visa"></i>
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Trust Badges -->
+                        <div class="cs-trust">
+                            <div class="cs-trust-item">
+                                <i class="fas fa-shield-alt"></i>
+                                <span>دفع آمن ١٠٠٪</span>
+                            </div>
+                            <div class="cs-trust-item">
+                                <i class="fas fa-sync-alt"></i>
+                                <span>استبدال مجاني</span>
+                            </div>
+                            <div class="cs-trust-item">
+                                <i class="fas fa-truck"></i>
+                                <span>توصيل سريع</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</section>
+
+<!-- ========== FEATURES STRIP ========== -->
+<section class="cart-features-strip">
+    <div class="container">
+        <div class="row g-3">
+            <div class="col-lg-3 col-md-6">
+                <div class="cf-card">
+                    <div class="cf-icon">
+                        <i class="fas fa-truck"></i>
+                    </div>
+                    <div>
+                        <strong>توصيل سريع</strong>
+                        <span>خلال 24 ساعة داخل الأقصر</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="cf-card">
+                    <div class="cf-icon">
+                        <i class="fas fa-money-bill-wave"></i>
+                    </div>
+                    <div>
+                        <strong>الدفع عند الاستلام</strong>
+                        <span>ادفع نقداً عند وصول طلبك</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="cf-card">
+                    <div class="cf-icon">
+                        <i class="fas fa-sync-alt"></i>
+                    </div>
+                    <div>
+                        <strong>استبدال فوري</strong>
+                        <span>في حالة وجود أي مشكلة</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="cf-card">
+                    <div class="cf-icon">
+                        <i class="fas fa-headset"></i>
+                    </div>
+                    <div>
+                        <strong>دعم متواصل</strong>
+                        <span>تواصل معنا في أي وقت</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        (function () {
+            // Update cart UI helper
+            function updateSummaryUI(data) {
+                const subtotalEl = document.getElementById('csSubtotal');
+                const deliveryEl = document.getElementById('csDelivery');
+                const totalEl = document.getElementById('csTotal');
+                const countEl = document.getElementById('cartItemCount');
+                const navBadges = document.querySelectorAll('.cart-badge');
+
+                if (subtotalEl) subtotalEl.textContent = data.subTotal.toFixed(2) + ' ج.م';
+                if (deliveryEl) {
+                    if (data.deliveryFee === 0) {
+                        deliveryEl.textContent = 'مجاني';
+                        deliveryEl.classList.add('cs-delivery--free');
+                    } else {
+                        deliveryEl.textContent = data.deliveryFee.toFixed(2) + ' ج.م';
+                        deliveryEl.classList.remove('cs-delivery--free');
+                    }
+                }
+                if (totalEl) totalEl.textContent = data.total.toFixed(2) + ' ج.م';
+                if (countEl) countEl.textContent = data.totalCount;
+
+                navBadges.forEach(b => b.textContent = data.totalCount);
+
+                if (data.totalCount === 0) {
+                    location.reload();
+                }
+            }
+
+            async function syncQuantity(productId, quantity, cartItem) {
+                try {
+                    const formData = new FormData();
+                    formData.append('productId', productId);
+                    formData.append('quantity', quantity);
+
+                    const res = await fetch('/Cart/UpdateQuantity', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        if (cartItem && data.lineTotal !== undefined) {
+                            const lineValEl = cartItem.querySelector('.ci-total-value');
+                            if (lineValEl) lineValEl.textContent = data.lineTotal.toFixed(2);
+                        }
+                        updateSummaryUI(data);
+                    }
+                } catch (err) {
+                    console.error('Error updating cart quantity:', err);
+                }
+            }
+
+            // Plus & Minus buttons
+            document.querySelectorAll('.ci-qty-plus').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    const item = this.closest('.cart-item');
+                    const productId = item.dataset.productId;
+                    const input = item.querySelector('.ci-qty-input');
+                    const max = parseInt(input.getAttribute('max')) || 99;
+                    let val = parseInt(input.value) || 1;
+                    if (val < max) {
+                        input.value = val + 1;
+                        syncQuantity(productId, val + 1, item);
+                    }
+                });
+            });
+
+            document.querySelectorAll('.ci-qty-minus').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    const item = this.closest('.cart-item');
+                    const productId = item.dataset.productId;
+                    const input = item.querySelector('.ci-qty-input');
+                    let val = parseInt(input.value) || 1;
+                    if (val > 1) {
+                        input.value = val - 1;
+                        syncQuantity(productId, val - 1, item);
+                    }
+                });
+            });
+
+            document.querySelectorAll('.ci-qty-input').forEach(input => {
+                input.addEventListener('change', function () {
+                    const item = this.closest('.cart-item');
+                    const productId = item.dataset.productId;
+                    const max = parseInt(this.getAttribute('max')) || 99;
+                    let val = parseInt(this.value) || 1;
+                    if (val < 1) val = 1;
+                    if (val > max) val = max;
+                    this.value = val;
+                    syncQuantity(productId, val, item);
+                });
+            });
+
+            // Remove item
+            document.querySelectorAll('.ci-remove-btn').forEach(btn => {
+                btn.addEventListener('click', async function () {
+                    const item = this.closest('.cart-item');
+                    const productId = item.dataset.productId;
+
+                    item.style.opacity = '0';
+                    item.style.transform = 'translateX(30px)';
+
+                    try {
+                        const formData = new FormData();
+                        formData.append('productId', productId);
+                        const res = await fetch('/Cart/Remove', {
+                            method: 'POST',
+                            body: formData
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                            setTimeout(() => {
+                                item.remove();
+                                updateSummaryUI(data);
+                            }, 300);
+                        }
+                    } catch (err) {
+                        console.error('Error removing item:', err);
+                        item.style.opacity = '1';
+                        item.style.transform = '';
+                    }
+                });
+            });
+
+            // Clear Cart
+            const clearBtn = document.getElementById('cartClearBtn');
+            if (clearBtn) {
+                clearBtn.addEventListener('click', async function () {
+                    if (confirm('هل أنت متأكد من تفريغ السلة؟')) {
+                        try {
+                            const res = await fetch('/Cart/Clear', { method: 'POST' });
+                            const data = await res.json();
+                            if (data.success) {
+                                location.reload();
+                            }
+                        } catch (err) {
+                            console.error('Error clearing cart:', err);
+                        }
+                    }
+                });
+            }
+        })();
+    </script>
+}
