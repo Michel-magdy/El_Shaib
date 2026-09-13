@@ -11,7 +11,7 @@
                     <i class="fas fa-user-plus"></i>
                 </div>
                 <h1 class="h4 fw-bold mb-1" style="color: var(--primary-dark, #0d2818);">إنشاء حساب جديد</h1>
-                <p class="text-muted small">انضم إلى عائلة مزارع الشايب واستمتع بطلب أسهل وتتبع أسرع</p>
+                <p class="text-muted small">سجّل حسابك برقم الهاتف واستمتع بطلب أسهل وتتبع فوري للشحنات</p>
             </div>
 
             @if (!ViewData.ModelState.IsValid)
@@ -27,42 +27,60 @@
 
                 <div class="mb-3">
                     <label asp-for="FullName" class="form-label fw-semibold">الاسم بالكامل <span class="text-danger">*</span></label>
-                    <input asp-for="FullName" class="form-control form-control-lg" placeholder="مثال: أحمد محمد" required autofocus />
+                    <div class="input-group">
+                        <span class="input-group-text bg-light text-muted"><i class="fas fa-user"></i></span>
+                        <input asp-for="FullName" class="form-control form-control-lg" placeholder="مثال: أحمد محمد" required autofocus />
+                    </div>
                     <span asp-validation-for="FullName" class="text-danger small"></span>
                 </div>
 
                 <div class="mb-3">
                     <label asp-for="Phone" class="form-label fw-semibold">رقم الهاتف <span class="text-danger">*</span></label>
-                    <input asp-for="Phone" class="form-control form-control-lg" dir="ltr" placeholder="010XXXXXXXX" required />
+                    <div class="input-group">
+                        <span class="input-group-text bg-light text-muted"><i class="fas fa-phone"></i></span>
+                        <input asp-for="Phone" type="tel" class="form-control form-control-lg" dir="ltr" placeholder="010XXXXXXXX" required />
+                    </div>
+                    <div class="form-text text-muted small">يُستخدم رقم الهاتف لتسجيل الدخول والتواصل لتسليم الطلبات</div>
                     <span asp-validation-for="Phone" class="text-danger small"></span>
                 </div>
 
                 <div class="mb-3">
-                    <label asp-for="Email" class="form-label fw-semibold">البريد الإلكتروني <span class="text-danger">*</span></label>
-                    <input asp-for="Email" class="form-control form-control-lg" dir="ltr" placeholder="example@domain.com" required />
+                    <label asp-for="Email" class="form-label fw-semibold text-muted small">
+                        البريد الإلكتروني <span class="badge bg-light text-muted border">اختياري</span>
+                    </label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light text-muted"><i class="fas fa-envelope"></i></span>
+                        <input asp-for="Email" class="form-control" dir="ltr" placeholder="اختياري - يتم توليده تلقائياً برقم هاتفك إذا تُرِك فارغاً" />
+                    </div>
                     <span asp-validation-for="Email" class="text-danger small"></span>
                 </div>
 
                 <div class="mb-3">
                     <label asp-for="Password" class="form-label fw-semibold">كلمة المرور <span class="text-danger">*</span></label>
-                    <input asp-for="Password" class="form-control form-control-lg" placeholder="•••••••• (٦ أحرف على الأقل)" required />
+                    <div class="input-group">
+                        <span class="input-group-text bg-light text-muted"><i class="fas fa-lock"></i></span>
+                        <input asp-for="Password" class="form-control form-control-lg" placeholder="•••••••• (٦ أحرف على الأقل)" required />
+                    </div>
                     <span asp-validation-for="Password" class="text-danger small"></span>
                 </div>
 
                 <div class="mb-4">
                     <label asp-for="ConfirmPassword" class="form-label fw-semibold">تأكيد كلمة المرور <span class="text-danger">*</span></label>
-                    <input asp-for="ConfirmPassword" class="form-control form-control-lg" placeholder="••••••••" required />
+                    <div class="input-group">
+                        <span class="input-group-text bg-light text-muted"><i class="fas fa-check-double"></i></span>
+                        <input asp-for="ConfirmPassword" class="form-control form-control-lg" placeholder="••••••••" required />
+                    </div>
                     <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
                 </div>
 
                 <button type="submit" class="btn btn-success btn-lg w-100 py-3 fw-bold shadow-sm mb-3" style="background-color: var(--primary, #1b4332); border: none;">
-                    إنشاء الحساب
+                    <i class="fas fa-user-check me-1"></i> إنشاء الحساب
                 </button>
 
                 <div class="text-center">
                     <span class="text-muted small">لديك حساب بالفعل؟ </span>
                     <a asp-controller="Account" asp-action="Login" asp-route-returnUrl="@Model.ReturnUrl" class="fw-bold text-decoration-none" style="color: var(--primary, #1b4332);">
-                        تسجيل الدخول
+                        تسجيل الدخول بالهاتف
                     </a>
                 </div>
             </form>
@@ -73,4 +91,3 @@
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
 }
-

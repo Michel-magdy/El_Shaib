@@ -17,21 +17,72 @@ public class AuthService : IAuthService
         _passwordHasher = new PasswordHasher<Customer>();
     }
 
-    public async Task<(bool Success, string? Error, Customer? Customer)> RegisterAsync(RegisterViewModel model)
+    public static string NormalizePhone(string? phone)
     {
-        var cleanEmail = model.Email.Trim().ToLowerInvariant();
-        var cleanPhone = model.Phone.Trim();
+        if (string.IsNullOrWhiteSpace(phone))
+            return string.Empty;
 
-        var emailExists = await _context.Customers.AnyAsync(c => c.Email.ToLower() == cleanEmail);
-        if (emailExists)
+        var sb = new System.Text.StringBuilder();
+        foreach (var ch in phone.Trim())
         {
-            return (false, "البريد الإلكتروني مسجل مسبقاً، يرجى تسجيل الدخول أو استخدام بريد آخر.", null);
+            if (ch >= '٠' && ch <= '٩')
+                sb.Append((char)('0' + (ch - '٠')));
+            else if (char.IsDigit(ch) || ch == '+')
+                sb.Append(ch);
         }
 
-        var phoneExists = await _context.Customers.AnyAsync(c => c.Phone == cleanPhone);
+        var cleaned = sb.ToString();
+
+        // Standardize Egyptian mobile numbers
+        if (cleaned.StartsWith("+20"))
+            cleaned = "0" + cleaned.Substring(3);
+        else if (cleaned.StartsWith("0020"))
+            cleaned = "0" + cleaned.Substring(4);
+        else if (cleaned.StartsWith("20") && cleaned.Length == 12)
+            cleaned = "0" + cleaned.Substring(2);
+        else if (cleaned.Length == 10 && (cleaned.StartsWith("10") || cleaned.StartsWith("11") || cleaned.StartsWith("12") || cleaned.StartsWith("15")))
+            cleaned = "0" + cleaned;
+
+        return cleaned;
+    }
+
+    public async Task<(bool Success, string? Error, Customer? Customer)> RegisterAsync(RegisterViewModel model)
+    {
+        var cleanPhone = NormalizePhone(model.Phone);
+        if (string.IsNullOrWhiteSpace(cleanPhone) || cleanPhone.Length < 8)
+        {
+            return (false, "يرجى إدخال رقم هاتف صحيح.", null);
+        }
+
+        var phoneExists = await _context.Customers.AnyAsync(c => c.Phone == cleanPhone || c.Phone == model.Phone.Trim());
         if (phoneExists)
         {
-            return (false, "رقم الهاتف مسجل مسبقاً في حساب آخر.", null);
+            return (false, "رقم الهاتف مسجل مسبقاً، يرجى تسجيل الدخول مباشرة.", null);
+        }
+
+        // Generate faked or normalized email
+        string cleanEmail;
+        if (!string.IsNullOrWhiteSpace(model.Email))
+        {
+            cleanEmail = model.Email.Trim().ToLowerInvariant();
+            var emailExists = await _context.Customers.AnyAsync(c => c.Email.ToLower() == cleanEmail);
+            if (emailExists)
+            {
+                return (false, "البريد الإلكتروني مسجل مسبقاً، يرجى استخدام بريد آخر أو تركه فارغاً.", null);
+            }
+        }
+        else
+        {
+            // Auto-fake email based on normalized phone
+            var digitsOnly = new string(cleanPhone.Where(char.IsDigit).ToArray());
+            cleanEmail = $"{digitsOnly}@customer.elshaib.local";
+
+            // If the faked email already exists for any reason, ensure uniqueness
+            var emailExists = await _context.Customers.AnyAsync(c => c.Email.ToLower() == cleanEmail);
+            if (emailExists)
+            {
+                cleanEmail = $"{digitsOnly}_{Guid.NewGuid():N}@customer.elshaib.local";
+            }
         }
 
         var customer = new Customer
@@ -53,14 +104,24 @@ public class AuthService : IAuthService
 
     public async Task<(bool Success, string? Error, Customer? Customer)> AuthenticateAsync(LoginViewModel model)
     {
-        var input = model.EmailOrPhone.Trim().ToLowerInvariant();
+        var rawInput = (model.Phone ?? model.EmailOrPhone ?? string.Empty).Trim();
+        if (string.IsNullOrWhiteSpace(rawInput))
+        {
+            return (false, "يرجى إدخال رقم الهاتف.", null);
+        }
 
+        var normalizedPhone = NormalizePhone(rawInput);
+        var lowerInput = rawInput.ToLowerInvariant();
+
+        // Customer can log in with normalized phone, raw phone, or email
         var customer = await _context.Customers
-            .FirstOrDefaultAsync(c => c.Email.ToLower() == input || c.Phone == model.EmailOrPhone.Trim());
+            .FirstOrDefaultAsync(c => c.Phone == normalizedPhone 
+                                   || c.Phone == rawInput 
+                                   || c.Email.ToLower() == lowerInput);
 
         if (customer == null)
         {
-            return (false, "بيانات الدخول غير صحيحة. يرجى التأكد من البريد الإلكتروني أو الهاتف وكلمة المرور.", null);
+            return (false, "رقم الهاتف أو كلمة المرور غير صحيحة.", null);
         }
 
         if (!customer.IsActive)
@@ -76,7 +137,7 @@ public class AuthService : IAuthService
         var verifyResult = _passwordHasher.VerifyHashedPassword(customer, customer.PasswordHash, model.Password);
         if (verifyResult == PasswordVerificationResult.Failed)
         {
-            return (false, "بيانات الدخول غير صحيحة. يرجى التأكد من كلمة المرور.", null);
+            return (false, "رقم الهاتف أو كلمة المرور غير صحيحة.", null);
         }
 
         customer.LastLoginAt = DateTime.UtcNow;

@@ -5,9 +5,15 @@ namespace El_Shaib.ViewModels;
 
 public class LoginViewModel
 {
-    [Required(ErrorMessage = "يرجى إدخال البريد الإلكتروني أو رقم الهاتف")]
-    [Display(Name = "البريد الإلكتروني أو رقم الهاتف")]
-    public string EmailOrPhone { get; set; } = string.Empty;
+    [Required(ErrorMessage = "يرجى إدخال رقم الهاتف")]
+    [Display(Name = "رقم الهاتف")]
+    public string Phone { get; set; } = string.Empty;
+
+    public string EmailOrPhone
+    {
+        get => Phone;
+        set => Phone = value;
+    }
 
     [Required(ErrorMessage = "يرجى إدخال كلمة المرور")]
     [DataType(DataType.Password)]
@@ -29,15 +35,13 @@ public class RegisterViewModel
 
     [Required(ErrorMessage = "يرجى إدخال رقم الهاتف")]
     [MaxLength(20)]
-    [Phone(ErrorMessage = "رقم الهاتف غير صالح")]
     [Display(Name = "رقم الهاتف")]
     public string Phone { get; set; } = string.Empty;
 
-    [Required(ErrorMessage = "يرجى إدخال البريد الإلكتروني")]
     [MaxLength(150)]
-    [EmailAddress(ErrorMessage = "البريد الإلكتروني غير صالح")]
-    [Display(Name = "البريد الإلكتروني")]
-    public string Email { get; set; } = string.Empty;
+    [EmailAddress(ErrorMessage = "صيغة البريد الإلكتروني غير صحيحة")]
+    [Display(Name = "البريد الإلكتروني (اختياري)")]
+    public string? Email { get; set; }
 
     [Required(ErrorMessage = "يرجى إدخال كلمة المرور")]
     [StringLength(100, ErrorMessage = "يجب أن تكون كلمة المرور 6 أحرف على الأقل", MinimumLength = 6)]
