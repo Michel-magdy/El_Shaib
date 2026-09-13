@@ -9,4 +9,5 @@ public interface IProductService : IGenericService<Product>
     Task<Product?> GetProductDetailsAsync(int id);
     Task<ProductListViewModel> GetFilteredProductsAsync(ProductFilterViewModel filter);
     Task<List<Category>> GetCategoriesAsync();
+    Task<List<Product>> GetRelatedProductsAsync(int categoryId, int currentProductId, int count = 4);
 }

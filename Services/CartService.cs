@@ -4,6 +4,7 @@ using El_Shaib.Models;
 using El_Shaib.ViewModels;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace El_Shaib.Services;
 
@@ -11,12 +12,14 @@ public class CartService : ICartService
 {
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly AppDbContext _context;
+    private readonly IMemoryCache _cache;
     private const string CartSessionKey = "ELSHAIB_CART_SESSION";
 
-    public CartService(IHttpContextAccessor httpContextAccessor, AppDbContext context)
+    public CartService(IHttpContextAccessor httpContextAccessor, AppDbContext context, IMemoryCache cache)
     {
         _httpContextAccessor = httpContextAccessor;
         _context = context;
+        _cache = cache;
     }
 
     private ISession Session => _httpContextAccessor.HttpContext?.Session
@@ -58,6 +61,7 @@ public class CartService : ICartService
 
         var productIds = cartMap.Keys.ToList();
         var products = await _context.Products
+            .AsNoTracking()
             .Include(p => p.Images)
             .Include(p => p.Category)
             .Where(p => productIds.Contains(p.Id))
@@ -94,37 +98,48 @@ public class CartService : ICartService
     {
         if (quantity <= 0) quantity = 1;
 
-        var product = await _context.Products.FindAsync(productId);
-        if (product == null)
+        // Cache lightweight product metadata (Name & StockQuantity) to avoid remote DB round-trip on every add-to-cart
+        var cacheKey = $"cart_prod_meta_{productId}";
+        if (!_cache.TryGetValue(cacheKey, out (string Name, int StockQuantity) prodMeta))
         {
-            return new CartActionResult
+            var p = await _context.Products
+                .AsNoTracking()
+                .Where(x => x.Id == productId)
+                .Select(x => new { x.Name, x.StockQuantity })
+                .FirstOrDefaultAsync();
+
+            if (p == null)
             {
-                Success = false,
-                Message = "المنتج غير موجود."
-            };
+                return new CartActionResult
+                {
+                    Success = false,
+                    Message = "المنتج غير موجود."
+                };
+            }
+
+            prodMeta = (p.Name, p.StockQuantity);
+            _cache.Set(cacheKey, prodMeta, TimeSpan.FromMinutes(30));
         }
 
         var cart = GetSessionCart();
         var currentQty = cart.GetValueOrDefault(productId, 0);
         var newQty = currentQty + quantity;
 
-        if (product.StockQuantity > 0 && newQty > product.StockQuantity)
+        if (prodMeta.StockQuantity > 0 && newQty > prodMeta.StockQuantity)
         {
-            newQty = product.StockQuantity;
+            newQty = prodMeta.StockQuantity;
         }
 
         cart[productId] = newQty;
         SaveSessionCart(cart);
 
-        var fullCart = await GetCartAsync();
+        var totalCount = cart.Values.Sum();
+
         return new CartActionResult
         {
             Success = true,
-            Message = $"تمت إضافة \"{product.Name}\" إلى سلة التسوق بنجاح!",
-            TotalCount = fullCart.TotalItemCount,
-            SubTotal = fullCart.SubTotal,
-            Total = fullCart.Total,
-            DeliveryFee = fullCart.DeliveryFee
+            Message = $"تمت إضافة \"{prodMeta.Name}\" إلى سلة التسوق بنجاح!",
+            TotalCount = totalCount
         };
     }
 
@@ -138,10 +153,15 @@ public class CartService : ICartService
         }
         else
         {
-            var product = await _context.Products.FindAsync(productId);
-            if (product != null && product.StockQuantity > 0 && quantity > product.StockQuantity)
+            var stockQty = await _context.Products
+                .AsNoTracking()
+                .Where(p => p.Id == productId)
+                .Select(p => p.StockQuantity)
+                .FirstOrDefaultAsync();
+
+            if (stockQty > 0 && quantity > stockQty)
             {
-                quantity = product.StockQuantity;
+                quantity = stockQty;
             }
             cart[productId] = quantity;
         }

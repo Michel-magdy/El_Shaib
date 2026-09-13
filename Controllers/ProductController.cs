@@ -44,6 +44,8 @@ namespace El_Shaib.Controllers
                 return NotFound();
             }
 
+            ViewBag.RelatedProducts = await _productService.GetRelatedProductsAsync(product.CategoryId, product.Id, 4);
+
             return View(product);
         }
     }

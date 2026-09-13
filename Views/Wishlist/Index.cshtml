@@ -61,7 +61,8 @@
                                 <div class="pcard-image position-relative">
                                     <a asp-controller="Product" asp-action="Details" asp-route-id="@product.Id">
                                         <img src="@(primaryImage?.ImageUrl ?? "/images/HeroImage.jpg")"
-                                             alt="@(primaryImage?.AltText ?? product.Name)" loading="lazy" />
+                                             alt="@(primaryImage?.AltText ?? product.Name)"
+                                             onerror="this.onerror=null;this.src='/images/HeroImage.jpg';" />
                                     </a>
                                     <button class="btn btn-danger btn-sm position-absolute top-0 end-0 m-2 rounded-circle btn-remove-wishlist"
                                             data-product-id="@product.Id" title="حذف من المفضلة" style="width: 32px; height: 32px; padding: 0;">
@@ -133,31 +134,52 @@
             });
         });
 
-        // Add to cart from wishlist
+        // Add to cart from wishlist (optimistic UI)
         document.querySelectorAll('.btn-add-cart-from-wishlist').forEach(btn => {
-            btn.addEventListener('click', async function () {
+            btn.addEventListener('click', function () {
                 const productId = this.dataset.productId;
-                this.disabled = true;
+                const badges = document.querySelectorAll('.cart-badge');
+                let prevCount = 0;
+
+                // 1. Optimistic badge update
+                badges.forEach(b => {
+                    prevCount = parseInt(b.textContent) || 0;
+                    b.textContent = prevCount + 1;
+                    b.classList.remove('badge-pop');
+                    void b.offsetWidth;
+                    b.classList.add('badge-pop');
+                });
+                setTimeout(() => badges.forEach(b => b.classList.remove('badge-pop')), 400);
+
+                // 2. Button feedback
                 const orig = this.innerHTML;
-                this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الإضافة...';
-
-                try {
-                    const formData = new FormData();
-                    formData.append('productId', productId);
-                    formData.append('quantity', 1);
-
-                    const res = await fetch('/Cart/Add', { method: 'POST', body: formData });
-                    const data = await res.json();
-                    if (data.success) {
-                        document.querySelectorAll('.cart-badge').forEach(b => b.textContent = data.totalCount);
-                        if (window.showToast) window.showToast(data.message, 'success');
-                    }
-                } catch (err) {
-                    console.error('Error adding to cart:', err);
-                } finally {
-                    this.disabled = false;
+                this.classList.add('btn-add-success');
+                this.innerHTML = '<i class="fas fa-check me-1"></i> تمت الإضافة';
+                setTimeout(() => {
+                    this.classList.remove('btn-add-success');
                     this.innerHTML = orig;
-                }
+                }, 1200);
+
+                // 3. Background async sync
+                const formData = new FormData();
+                formData.append('productId', productId);
+                formData.append('quantity', 1);
+
+                fetch('/Cart/Add', { method: 'POST', body: formData })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            badges.forEach(b => b.textContent = data.totalCount);
+                            if (window.showToast) window.showToast(data.message, 'success');
+                        } else {
+                            badges.forEach(b => b.textContent = prevCount);
+                            if (window.showToast) window.showToast(data.message, 'error');
+                        }
+                    })
+                    .catch(err => {
+                        console.error('Error adding to cart:', err);
+                        badges.forEach(b => b.textContent = prevCount);
+                    });
             });
         });
     </script>

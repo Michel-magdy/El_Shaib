@@ -89,7 +89,7 @@
                                 <div class="cart-item-product">
                                     <a asp-controller="Product" asp-action="Details" asp-route-id="@item.ProductId"
                                        class="cart-item-img">
-                                        <img src="@item.ImageUrl" alt="@item.AltText" loading="lazy" />
+                                        <img src="@item.ImageUrl" alt="@item.AltText" onerror="this.onerror=null;this.src='/images/HeroImage.jpg';" />
                                     </a>
                                     <div class="cart-item-info">
                                         <a asp-controller="Product" asp-action="Details" asp-route-id="@item.ProductId"
@@ -150,11 +150,11 @@
                     <!-- Cart Actions Bar -->
                     <div class="cart-actions-bar">
                         <a asp-controller="Product" asp-action="Index" class="cart-continue-btn">
-                            <i class="fas fa-arrow-right me-2"></i>
+                            <i class="fas fa-arrow-right me-1"></i>
                             متابعة التسوق
                         </a>
                         <button class="cart-clear-btn" type="button" id="cartClearBtn">
-                            <i class="fas fa-trash me-1"></i>
+                            <i class="fas fa-trash-alt me-1"></i>
                             تفريغ السلة
                         </button>
                     </div>
@@ -406,8 +406,9 @@
                     const item = this.closest('.cart-item');
                     const productId = item.dataset.productId;
 
+                    item.style.transition = 'all 0.3s ease';
                     item.style.opacity = '0';
-                    item.style.transform = 'translateX(30px)';
+                    item.style.transform = 'translateX(20px)';
 
                     try {
                         const formData = new FormData();
@@ -422,6 +423,9 @@
                                 item.remove();
                                 updateSummaryUI(data);
                             }, 300);
+                        } else {
+                            item.style.opacity = '1';
+                            item.style.transform = '';
                         }
                     } catch (err) {
                         console.error('Error removing item:', err);
@@ -445,6 +449,20 @@
                         } catch (err) {
                             console.error('Error clearing cart:', err);
                         }
+                    }
+                });
+            }
+
+            // Coupon Code handler
+            const couponBtn = document.getElementById('csCouponBtn');
+            if (couponBtn) {
+                couponBtn.addEventListener('click', function () {
+                    const input = document.getElementById('csCouponInput');
+                    const code = input ? input.value.trim() : '';
+                    if (!code) {
+                        if (window.showToast) window.showToast('يرجى إدخال كود الخصم أولاً', 'error');
+                    } else {
+                        if (window.showToast) window.showToast('كود الخصم غير صالح أو منتهي الصلاحية', 'error');
                     }
                 });
             }

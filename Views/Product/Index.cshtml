@@ -345,7 +345,7 @@
                     return;
                 }
 
-                // 7. Delegated AJAX Add to Cart
+                // 7. Delegated AJAX Add to Cart (Optimistic UI & Low INP)
                 const cartBtn = e.target.closest('.btn-add-cart-ajax');
                 if (cartBtn) {
                     const pcard = cartBtn.closest('.pcard');
@@ -353,10 +353,28 @@
                     const qtyInput = pcard ? pcard.querySelector('.qty-input') : null;
                     const quantity = qtyInput ? parseInt(qtyInput.value) || 1 : 1;
 
-                    cartBtn.disabled = true;
-                    const originalHtml = cartBtn.innerHTML;
-                    cartBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري...';
+                    // 1. Optimistic badge update (<16ms paint)
+                    const badges = document.querySelectorAll('.cart-badge');
+                    let prevCount = 0;
+                    badges.forEach(b => {
+                        prevCount = parseInt(b.textContent) || 0;
+                        b.textContent = prevCount + quantity;
+                        b.classList.remove('badge-pop');
+                        void b.offsetWidth; // trigger reflow for animation restart
+                        b.classList.add('badge-pop');
+                    });
+                    setTimeout(() => badges.forEach(b => b.classList.remove('badge-pop')), 400);
 
+                    // 2. Non-blocking button visual confirmation (never set disabled=true to avoid event stalls)
+                    const originalHtml = cartBtn.innerHTML;
+                    cartBtn.classList.add('btn-add-success');
+                    cartBtn.innerHTML = '<span class="pcard-basket-label" style="color:#fff;"><i class="fas fa-check"></i> تمت الإضافة</span>';
+                    setTimeout(() => {
+                        cartBtn.classList.remove('btn-add-success');
+                        cartBtn.innerHTML = originalHtml;
+                    }, 1200);
+
+                    // 3. Background asynchronous sync
                     const formData = new FormData();
                     formData.append('productId', productId);
                     formData.append('quantity', quantity);
@@ -368,20 +386,21 @@
                     .then(res => res.json())
                     .then(data => {
                         if (data.success) {
-                            document.querySelectorAll('.cart-badge').forEach(b => b.textContent = data.totalCount);
+                            badges.forEach(b => b.textContent = data.totalCount);
                             if (window.showToast) {
                                 window.showToast(data.message, 'success');
                             }
                         } else {
+                            // Rollback optimistic count
+                            badges.forEach(b => b.textContent = prevCount);
                             if (window.showToast) {
                                 window.showToast(data.message, 'error');
                             }
                         }
                     })
-                    .catch(err => console.error('Add to cart failed:', err))
-                    .finally(() => {
-                        cartBtn.disabled = false;
-                        cartBtn.innerHTML = originalHtml;
+                    .catch(err => {
+                        console.error('Add to cart failed:', err);
+                        badges.forEach(b => b.textContent = prevCount);
                     });
                 }
             });

@@ -28,15 +28,15 @@
                             <i class="fas fa-shopping-basket me-2"></i>
                             تسوق المنتجات
                         </a>
-                        <a href="#" class="btn btn-outline-custom">
-                            <i class="fas fa-phone-alt me-2"></i>
-                            اطلب الآن
+                        <a asp-controller="Product" asp-action="Index" class="btn btn-outline-custom">
+                            <i class="fas fa-store me-2"></i>
+                            جميع الأصناف
                         </a>
                     </div>
 
                     <form method="get" asp-controller="Product" asp-action="Index" class="hero-search">
                         <input type="text" name="Query" placeholder="ابحث عن منتجات طازجة..." />
-                        <button type="submit" class="search-icon" style="background:none; border:none; cursor:pointer;">
+                        <button type="submit" class="search-icon" aria-label="بحث">
                             <i class="fas fa-search"></i>
                         </button>
                     </form>
@@ -136,8 +136,8 @@
                     <div class="feature-icon feature-icon--value">
                         <i class="fas fa-shield-alt"></i>
                     </div>
-                    <h5>منتوج محلية وبأسعار معقولة</h5>
-                    <p>منتجات محلية سعودية بأسعار تنافسية ومناسبة للجميع</p>
+                    <h5>منتجات طازجة بأسعار تنافسية</h5>
+                    <p>منتجات طبيعية ومحلية طازجة بأسعار مباشرة ومناسبة للجميع</p>
                 </div>
             </div>
 
@@ -146,8 +146,8 @@
                     <div class="feature-icon feature-icon--delivery">
                         <i class="fas fa-truck"></i>
                     </div>
-                    <h5>توصيل سريع داخل القصيم</h5>
-                    <p>خدمة توصيل سريعة ومجانية لجميع مناطق القصيم</p>
+                    <h5>توصيل سريع داخل الأقصر</h5>
+                    <p>خدمة توصيل سريعة ومجانية للطلبات المؤهلة لجميع مناطق الأقصر</p>
                 </div>
             </div>
         </div>
@@ -161,83 +161,88 @@
     <section class="products-section" id="products">
         <div class="container">
             <div class="products-header">
-                <div class="container">
-                    <div class="hero-badge">
-                        <i class="fas fa-egg"></i>
-                        اختيارات الأسرة والصحة
-                    </div>
-                    <h2 class="section-title">منتجاتنا
-                    </h2>
+                <div class="hero-badge">
+                    <i class="fas fa-egg"></i>
+                    اختيارات الأسرة والصحة
                 </div>
+                <h2 class="section-title">منتجاتنا الطازجة</h2>
                 <p class="section-subtitle">
-                    اختر من منتجات البيض الطازج المتوفرة اليوم من إنتاج مزارعنا </p>
-                    <div class="products-tabs">
-                        <a href="#" class="tab-link active">الأكثر مبيعاً</a>
-                        <a href="#" class="tab-link">عرض الكل</a>
-                    </div>
+                    اختر من منتجات البيض الطازج المتوفرة اليوم من إنتاج مزارعنا
+                </p>
+                <div class="products-tabs">
+                    <a href="#products" class="tab-link active">الأكثر مبيعاً</a>
+                    <a asp-controller="Product" asp-action="Index" class="tab-link">عرض الكل</a>
                 </div>
+            </div>
 
-                <div class="row g-4">
-                    @if (Model.Count == 0)
+            <div class="row g-4">
+                @if (Model.Count == 0)
+                {
+                    <div class="col-12">
+                        <p class="section-subtitle">لا توجد منتجات متاحة حالياً.</p>
+                    </div>
+                }
+                else
+                {
+                    @foreach (var product in Model)
                     {
-                        <div class="col-12">
-                            <p class="section-subtitle">لا توجد منتجات متاحة حالياً.</p>
-                        </div>
-                    }
-                    else
-                    {
-                        @foreach (var product in Model)
-                        {
-                            var primaryImage = product.Images.FirstOrDefault(image => image.IsPrimary)
-                                ?? product.Images.FirstOrDefault();
+                        var primaryImage = product.Images.FirstOrDefault(image => image.IsPrimary)
+                            ?? product.Images.FirstOrDefault();
+                        var hasDiscount = product.OldPrice.HasValue && product.OldPrice.Value > product.Price;
+                        var discountPercent = hasDiscount
+                            ? (int)Math.Round((1 - (double)product.Price / (double)product.OldPrice!.Value) * 100)
+                            : 0;
 
-                            <div class="col-lg-3 col-md-6">
-                                <div class="product-card">
+                        <div class="col-lg-3 col-md-6">
+                            <div class="product-card">
+                                <a asp-controller="Product" asp-action="Details" asp-route-id="@product.Id"
+                                   class="product-image-link">
+                                    <div class="product-image-wrapper">
+                                        <img src="@(primaryImage?.ImageUrl ?? "/images/HeroImage.jpg")"
+                                             alt="@(primaryImage?.AltText ?? product.Name)"
+                                             width="280"
+                                             height="200"
+                                             onerror="this.onerror=null;this.src='/images/HeroImage.jpg';"
+                                             style="object-fit: cover;" />
+                                        @if (hasDiscount)
+                                        {
+                                            <span class="product-badge-discount">خصم @discountPercent%</span>
+                                        }
+                                    </div>
+                                </a>
+                                <button class="product-wishlist" type="button" aria-label="إضافة إلى المفضلة" data-product-id="@product.Id">
+                                    <i class="far fa-heart"></i>
+                                </button>
+                                <div class="product-info">
+                                    <span class="product-category">
+                                        @(product.PackageType ?? product.UnitSize ?? product.Category?.Name ?? "منتج طازج")
+                                    </span>
                                     <a asp-controller="Product" asp-action="Details" asp-route-id="@product.Id"
-                                       class="product-image-link">
-                                        <div class="product-image-wrapper">
-                                            <img src="@(primaryImage?.ImageUrl ?? "/images/HeroImage.jpg")"
-                                                 alt="@(primaryImage?.AltText ?? product.Name)"
-                                                 loading="lazy"
-                                                 decoding="async"
-                                                 width="280"
-                                                 height="200"
-                                                 style="object-fit: cover;" />
-                                        </div>
+                                       class="product-name-link">
+                                        <h5 class="product-name">@product.Name</h5>
                                     </a>
-                                    <button class="product-wishlist" type="button" aria-label="إضافة إلى المفضلة">
-                                        <i class="far fa-heart"></i>
-                                    </button>
-                                    <div class="product-info">
-                                        <span class="product-category">
-                                            @(product.PackageType ?? product.UnitSize ?? "منتج")
-                                        </span>
+                                    <p class="product-description">@product.Description</p>
+                                    <div class="product-price-row">
+                                        <span class="product-price">@product.Price.ToString("0.00")</span>
+                                        <span class="product-price-currency">ج.م</span>
+                                        @if (hasDiscount)
+                                        {
+                                            <span class="product-old-price">@product.OldPrice!.Value.ToString("0.00") ج.م</span>
+                                        }
+                                    </div>
+                                    <div class="product-actions">
+                                        <button class="btn-add-cart btn-home-add-cart" type="button" data-product-id="@product.Id">
+                                            <i class="fas fa-cart-plus me-1"></i>
+                                            أضف للسلة
+                                        </button>
                                         <a asp-controller="Product" asp-action="Details" asp-route-id="@product.Id"
-                                           class="product-name-link">
-                                            <h5 class="product-name">@product.Name</h5>
-                                        </a>
-                                        <p class="product-description">@product.Description</p>
-                                        <div class="product-price-row">
-                                            <span class="product-price">@product.Price.ToString("0.00")</span>
-                                            <span class="product-price-currency">ج.م</span>
-                                            @if (product.OldPrice.HasValue)
-                                            {
-                                                <span class="product-old-price">@product.OldPrice.Value.ToString("0.00") ج.م</span>
-                                            }
-                                        </div>
-                                        <div class="product-actions">
-                                            <button class="btn-add-cart btn-home-add-cart" type="button" data-product-id="@product.Id">
-                                                <i class="fas fa-cart-plus me-1"></i>
-                                                أضف للسلة
-                                            </button>
-                                            <a asp-controller="Product" asp-action="Details" asp-route-id="@product.Id"
-                                               class="btn-details" type="button">تفاصيل أكثر</a>
-                                        </div>
+                                           class="btn-details">تفاصيل</a>
                                     </div>
                                 </div>
                             </div>
-                        }
+                        </div>
                     }
+                }
 
                     <!-- View All Link -->
                     <div class="products-view-all">
@@ -297,8 +302,8 @@
                             <div class="why-icon why-icon--gift">
                                 <i class="fas fa-gift"></i>
                             </div>
-                            <h5>عروض لربيع الجوالات</h5>
-                            <p>عروض حصرية ومستمرة عبر تطبيقنا على الجوال مع خصومات وهدايا مميزة</p>
+                            <h5>عروض وتخفيضات مستمرة</h5>
+                            <p>عروض حصرية ومستمرة مع خصومات وهدايا مميزة لعملائنا الكرام</p>
                         </div>
                     </div>
                 </div>
@@ -321,8 +326,8 @@
                             <div class="step-icon">
                                 <i class="fas fa-search"></i>
                             </div>
-                            <h5>التصفح والبحث عن المنتجين</h5>
-                            <p>تصفح منتجاتنا المتنوعة واختر من بين مجموعة واسعة من المنتجات الطازجة</p>
+                            <h5>التصفح واختيار المنتجات</h5>
+                            <p>تصفح منتجاتنا المتنوعة واختر من بين أصناف البيض البلدي والمائدة الطازج</p>
                         </div>
                     </div>
 
@@ -333,8 +338,8 @@
                             <div class="step-icon">
                                 <i class="fas fa-hand-pointer"></i>
                             </div>
-                            <h5>اختيار ما تريد أن تطلبه</h5>
-                            <p>أضف المنتجات التي ترغب بها إلى سلة التسوق واختر الكميات المناسبة</p>
+                            <h5>تحديد الكمية وسلة الشراء</h5>
+                            <p>أضف المنتجات التي ترغب بها إلى سلة التسوق وحدد الكميات المناسبة لاحتياجك</p>
                         </div>
                     </div>
 
@@ -346,7 +351,7 @@
                                 <i class="fas fa-credit-card"></i>
                             </div>
                             <h5>الدفع وتأكيد الطلب</h5>
-                            <p>أكد طلبك واختر طريقة الدفع المناسبة - نقداً عند الاستلام أو إلكترونياً</p>
+                            <p>أكد طلبك واختر طريقة الدفع المناسبة نقداً عند الاستلام بكل أمان</p>
                         </div>
                     </div>
 
@@ -357,8 +362,8 @@
                             <div class="step-icon">
                                 <i class="fas fa-truck"></i>
                             </div>
-                            <h5>الموعد والتوصيل المستمر</h5>
-                            <p>نوصل طلبك في الموعد المحدد مع إمكانية الاشتراك بالتوصيل المنتظم</p>
+                            <h5>استلام الطلب طازجاً</h5>
+                            <p>نوصل طلبك لباب بيتك في الموعد المحدد مع تغليف محكم يحافظ على جودته</p>
                         </div>
                     </div>
                 </div>
@@ -433,33 +438,50 @@
 @section Scripts {
     <script>
         document.querySelectorAll('.btn-home-add-cart').forEach(btn => {
-            btn.addEventListener('click', async function () {
+            btn.addEventListener('click', function () {
                 const productId = this.dataset.productId;
-                this.disabled = true;
+                const badges = document.querySelectorAll('.cart-badge');
+                let prevCount = 0;
+
+                // 1. Optimistic badge increment
+                badges.forEach(b => {
+                    prevCount = parseInt(b.textContent) || 0;
+                    b.textContent = prevCount + 1;
+                    b.classList.remove('badge-pop');
+                    void b.offsetWidth;
+                    b.classList.add('badge-pop');
+                });
+                setTimeout(() => badges.forEach(b => b.classList.remove('badge-pop')), 400);
+
+                // 2. Non-blocking button feedback
                 const orig = this.innerHTML;
-                this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> أضف للسلة';
-
-                try {
-                    const formData = new FormData();
-                    formData.append('productId', productId);
-                    formData.append('quantity', 1);
-
-                    const res = await fetch('/Cart/Add', { method: 'POST', body: formData });
-                    const data = await res.json();
-                    if (data.success) {
-                        document.querySelectorAll('.cart-badge').forEach(b => b.textContent = data.totalCount);
-                        if (window.showToast) window.showToast(data.message, 'success');
-                        else alert(data.message);
-                    } else {
-                        if (window.showToast) window.showToast(data.message, 'error');
-                        else alert(data.message);
-                    }
-                } catch (err) {
-                    console.error('Home add to cart failed:', err);
-                } finally {
-                    this.disabled = false;
+                this.classList.add('btn-add-success');
+                this.innerHTML = '<i class="fas fa-check me-1"></i> تمت الإضافة';
+                setTimeout(() => {
+                    this.classList.remove('btn-add-success');
                     this.innerHTML = orig;
-                }
+                }, 1200);
+
+                // 3. Background async sync
+                const formData = new FormData();
+                formData.append('productId', productId);
+                formData.append('quantity', 1);
+
+                fetch('/Cart/Add', { method: 'POST', body: formData })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            badges.forEach(b => b.textContent = data.totalCount);
+                            if (window.showToast) window.showToast(data.message, 'success');
+                        } else {
+                            badges.forEach(b => b.textContent = prevCount);
+                            if (window.showToast) window.showToast(data.message, 'error');
+                        }
+                    })
+                    .catch(err => {
+                        console.error('Home add to cart failed:', err);
+                        badges.forEach(b => b.textContent = prevCount);
+                    });
             });
         });
     </script>

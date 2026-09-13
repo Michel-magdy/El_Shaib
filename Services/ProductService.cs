@@ -116,4 +116,31 @@ public class ProductService : GenericService<Product>, IProductService
             Query = filter.Query
         };
     }
+
+    public async Task<List<Product>> GetRelatedProductsAsync(int categoryId, int currentProductId, int count = 4)
+    {
+        var query = context.Products
+            .AsNoTracking()
+            .Include(p => p.Images)
+            .Include(p => p.Category)
+            .Where(p => p.Id != currentProductId);
+
+        var related = await query
+            .Where(p => p.CategoryId == categoryId)
+            .Take(count)
+            .ToListAsync();
+
+        if (related.Count < count)
+        {
+            var needed = count - related.Count;
+            var relatedIds = related.Select(r => r.Id).Append(currentProductId).ToList();
+            var extra = await query
+                .Where(p => !relatedIds.Contains(p.Id))
+                .Take(needed)
+                .ToListAsync();
+            related.AddRange(extra);
+        }
+
+        return related;
+    }
 }

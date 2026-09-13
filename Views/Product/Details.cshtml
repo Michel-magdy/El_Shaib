@@ -35,7 +35,7 @@
                 {
                     <li>
                         <i class="fas fa-chevron-left breadcrumb-sep"></i>
-                        <a href="#">@Model.Category.Name</a>
+                        <a asp-controller="Product" asp-action="Index" asp-route-categoryId="@Model.CategoryId">@Model.Category.Name</a>
                     </li>
                 }
                 <li class="active">
@@ -58,7 +58,8 @@
                     <!-- Main Image -->
                     <div class="pd-gallery-main">
                         <img id="pdMainImage" src="@(primaryImage?.ImageUrl ?? "/images/HeroImage.jpg")"
-                             alt="@(primaryImage?.AltText ?? Model.Name)" />
+                             alt="@(primaryImage?.AltText ?? Model.Name)"
+                             onerror="this.onerror=null;this.src='/images/HeroImage.jpg';" />
 
                         <!-- Badges -->
                         <div class="pd-gallery-badges">
@@ -76,7 +77,7 @@
                         </div>
 
                         <!-- Wishlist -->
-                        <button class="pd-wishlist-btn" type="button" aria-label="إضافة إلى المفضلة">
+                        <button class="pd-wishlist-btn" type="button" aria-label="إضافة إلى المفضلة" data-product-id="@Model.Id">
                             <i class="far fa-heart"></i>
                         </button>
 
@@ -95,7 +96,7 @@
                                 <button class="pd-thumb @(image == primaryImage ? "pd-thumb--active" : "")" type="button"
                                         data-img="@image.ImageUrl" data-alt="@(image.AltText ?? Model.Name)"
                                         aria-label="@(image.AltText ?? "صورة المنتج")">
-                                    <img src="@image.ImageUrl" alt="@(image.AltText ?? "صورة مصغرة")" loading="lazy" />
+                                    <img src="@image.ImageUrl" alt="@(image.AltText ?? "صورة مصغرة")" onerror="this.onerror=null;this.src='/images/HeroImage.jpg';" />
                                 </button>
                             }
                         </div>
@@ -190,27 +191,38 @@
                         <div class="pd-order-section">
                             <label class="pd-order-label">الكمية</label>
                             <div class="pd-order-row">
-                                <div class="pd-qty">
-                                    <button class="pd-qty-btn pd-qty-minus" type="button" aria-label="تقليل الكمية">
+                                <div class="pd-qty @(inStock ? "" : "pd-qty--disabled")">
+                                    <button class="pd-qty-btn pd-qty-minus" type="button" aria-label="تقليل الكمية" @(inStock ? "" : "disabled")>
                                         <i class="fas fa-minus"></i>
                                     </button>
-                                    <input type="number" class="pd-qty-input" value="1" min="1" max="@Model.StockQuantity"
-                                           id="pdQtyInput" />
-                                    <button class="pd-qty-btn pd-qty-plus" type="button" aria-label="زيادة الكمية">
+                                    <input type="number" class="pd-qty-input" value="1" min="1" max="@(inStock ? Model.StockQuantity : 1)"
+                                           id="pdQtyInput" @(inStock ? "" : "disabled") />
+                                    <button class="pd-qty-btn pd-qty-plus" type="button" aria-label="زيادة الكمية" @(inStock ? "" : "disabled")>
                                         <i class="fas fa-plus"></i>
                                     </button>
                                 </div>
 
-                                <button class="pd-add-cart-btn" type="button" @(inStock ? "" : "disabled")>
-                                    <i class="fas fa-cart-plus"></i>
-                                    أضف للسلة
+                                <button class="pd-add-cart-btn @(inStock ? "" : "pd-add-cart-btn--disabled")" type="button" @(inStock ? "" : "disabled")>
+                                    @if (inStock)
+                                    {
+                                        <i class="fas fa-cart-plus"></i>
+                                        <span>أضف للسلة</span>
+                                    }
+                                    else
+                                    {
+                                        <i class="fas fa-ban"></i>
+                                        <span>نفدت الكمية</span>
+                                    }
                                 </button>
                             </div>
 
-                            <button class="pd-buy-now-btn" type="button" @(inStock ? "" : "disabled")>
-                                <i class="fas fa-bolt"></i>
-                                اشتري الآن
-                            </button>
+                            @if (inStock)
+                            {
+                                <button class="pd-buy-now-btn" type="button">
+                                    <i class="fas fa-bolt"></i>
+                                    اشتري الآن
+                                </button>
+                            }
                         </div>
 
                         <!-- Delivery & Trust Badges -->
@@ -505,7 +517,7 @@
                                 <a asp-controller="Product" asp-action="Details" asp-route-id="@rp.Id" class="pd-related-card">
                                     <div class="pd-related-img">
                                         <img src="@(rpImage?.ImageUrl ?? "/images/HeroImage.jpg")" alt="@(rpImage?.AltText ?? rp.Name)"
-                                             loading="lazy" />
+                                             loading="lazy" onerror="this.onerror=null;this.src='/images/HeroImage.jpg';" />
                                     </div>
                                     <div class="pd-related-body">
                                         <h6>@rp.Name</h6>
@@ -613,48 +625,56 @@
                 if (e.key === 'Escape') closeLightbox();
             });
 
-            // ===== Wishlist toggle =====
-            document.querySelector('.pd-wishlist-btn')?.addEventListener('click', function () {
-                const icon = this.querySelector('i');
-                icon.classList.toggle('far');
-                icon.classList.toggle('fas');
-                this.classList.toggle('pd-wishlist-btn--active');
-            });
-
             // ===== Add to Cart & Buy Now =====
             const addCartBtn = document.querySelector('.pd-add-cart-btn');
             const buyNowBtn = document.querySelector('.pd-buy-now-btn');
 
-            addCartBtn?.addEventListener('click', async function () {
+            addCartBtn?.addEventListener('click', function () {
                 const qtyInput = document.getElementById('pdQtyInput');
                 const quantity = qtyInput ? parseInt(qtyInput.value) || 1 : 1;
                 const productId = @Model.Id;
 
-                this.disabled = true;
+                // 1. Optimistic badge update (<16ms)
+                const badges = document.querySelectorAll('.cart-badge');
+                let prevCount = 0;
+                badges.forEach(b => {
+                    prevCount = parseInt(b.textContent) || 0;
+                    b.textContent = prevCount + quantity;
+                    b.classList.remove('badge-pop');
+                    void b.offsetWidth;
+                    b.classList.add('badge-pop');
+                });
+                setTimeout(() => badges.forEach(b => b.classList.remove('badge-pop')), 400);
+
+                // 2. Non-blocking button feedback
                 const orig = this.innerHTML;
-                this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الإضافة...';
-
-                try {
-                    const formData = new FormData();
-                    formData.append('productId', productId);
-                    formData.append('quantity', quantity);
-
-                    const res = await fetch('/Cart/Add', { method: 'POST', body: formData });
-                    const data = await res.json();
-                    if (data.success) {
-                        document.querySelectorAll('.cart-badge').forEach(b => b.textContent = data.totalCount);
-                        if (window.showToast) window.showToast(data.message, 'success');
-                        else alert(data.message);
-                    } else {
-                        if (window.showToast) window.showToast(data.message, 'error');
-                        else alert(data.message);
-                    }
-                } catch (err) {
-                    console.error('Add to cart failed:', err);
-                } finally {
-                    this.disabled = false;
+                this.classList.add('btn-add-success');
+                this.innerHTML = '<i class="fas fa-check me-1"></i> تمت الإضافة';
+                setTimeout(() => {
+                    this.classList.remove('btn-add-success');
                     this.innerHTML = orig;
-                }
+                }, 1200);
+
+                // 3. Background async sync
+                const formData = new FormData();
+                formData.append('productId', productId);
+                formData.append('quantity', quantity);
+
+                fetch('/Cart/Add', { method: 'POST', body: formData })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            badges.forEach(b => b.textContent = data.totalCount);
+                            if (window.showToast) window.showToast(data.message, 'success');
+                        } else {
+                            badges.forEach(b => b.textContent = prevCount);
+                            if (window.showToast) window.showToast(data.message, 'error');
+                        }
+                    })
+                    .catch(err => {
+                        console.error('Add to cart failed:', err);
+                        badges.forEach(b => b.textContent = prevCount);
+                    });
             });
 
             buyNowBtn?.addEventListener('click', async function () {
