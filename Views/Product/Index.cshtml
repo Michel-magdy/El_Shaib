@@ -229,7 +229,36 @@
 
                     if (response.ok) {
                         const html = await response.text();
+
+                        // Pre-cache images before inserting HTML to prevent blank flash
+                        const tempDiv = document.createElement('div');
+                        tempDiv.innerHTML = html;
+                        const imgElements = tempDiv.querySelectorAll('img');
+                        const imagePromises = Array.from(imgElements).map(img => {
+                            return new Promise(resolve => {
+                                if (!img.src || img.src === window.location.href) {
+                                    resolve();
+                                    return;
+                                }
+                                const preload = new Image();
+                                preload.onload = resolve;
+                                preload.onerror = resolve; // Don't block on failed images
+                                preload.src = img.src;
+                                // Resolve after 3s max to avoid blocking forever
+                                setTimeout(resolve, 3000);
+                            });
+                        });
+
+                        // Wait for images to pre-cache (with 3s timeout per image)
+                        await Promise.all(imagePromises);
+
+                        // Smooth swap: fade out, replace, fade in
+                        gridContainer.style.opacity = '0';
+                        gridContainer.style.transition = 'opacity 0.15s ease';
+                        await new Promise(r => setTimeout(r, 150));
+
                         gridContainer.innerHTML = html;
+                        gridContainer.style.opacity = '1';
 
                         if (updateHistory) {
                             window.history.pushState({

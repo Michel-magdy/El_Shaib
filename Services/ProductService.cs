@@ -64,57 +64,64 @@ public class ProductService : GenericService<Product>, IProductService
 
     public async Task<ProductListViewModel> GetFilteredProductsAsync(ProductFilterViewModel filter)
     {
-        var query = context.Products
-            .AsNoTracking()
-            .Include(p => p.Images)
-            .Include(p => p.Category)
-            .AsQueryable();
+        var cacheKey = $"filtered_{filter.Query}_{filter.CategoryId}_{filter.SortBy}_{filter.Page}_{filter.PageSize}";
 
-        if (!string.IsNullOrWhiteSpace(filter.Query))
+        return await _cache.GetOrCreateAsync(cacheKey, async entry =>
         {
-            var term = filter.Query.Trim();
-            query = query.Where(p =>
-                EF.Functions.ILike(p.Name, $"%{term}%") ||
-                (p.Description != null && EF.Functions.ILike(p.Description, $"%{term}%")) ||
-                (p.PackageType != null && EF.Functions.ILike(p.PackageType, $"%{term}%")) ||
-                (p.UnitSize != null && EF.Functions.ILike(p.UnitSize, $"%{term}%")));
-        }
+            entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(2);
 
-        if (filter.CategoryId.HasValue && filter.CategoryId.Value > 0)
-        {
-            query = query.Where(p => p.CategoryId == filter.CategoryId.Value);
-        }
+            var query = context.Products
+                .AsNoTracking()
+                .Include(p => p.Images)
+                .Include(p => p.Category)
+                .AsQueryable();
 
-        query = filter.SortBy switch
-        {
-            "price_asc" => query.OrderBy(p => p.Price),
-            "price_desc" => query.OrderByDescending(p => p.Price),
-            "newest" => query.OrderByDescending(p => p.CreatedAt),
-            _ => query.OrderByDescending(p => p.IsFeatured).ThenBy(p => p.Id)
-        };
+            if (!string.IsNullOrWhiteSpace(filter.Query))
+            {
+                var term = filter.Query.Trim();
+                query = query.Where(p =>
+                    EF.Functions.ILike(p.Name, $"%{term}%") ||
+                    (p.Description != null && EF.Functions.ILike(p.Description, $"%{term}%")) ||
+                    (p.PackageType != null && EF.Functions.ILike(p.PackageType, $"%{term}%")) ||
+                    (p.UnitSize != null && EF.Functions.ILike(p.UnitSize, $"%{term}%")));
+            }
 
-        var totalCount = await query.CountAsync();
-        var page = Math.Max(1, filter.Page);
-        var pageSize = Math.Clamp(filter.PageSize, 1, 100);
+            if (filter.CategoryId.HasValue && filter.CategoryId.Value > 0)
+            {
+                query = query.Where(p => p.CategoryId == filter.CategoryId.Value);
+            }
 
-        var products = await query
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .ToListAsync();
+            query = filter.SortBy switch
+            {
+                "price_asc" => query.OrderBy(p => p.Price),
+                "price_desc" => query.OrderByDescending(p => p.Price),
+                "newest" => query.OrderByDescending(p => p.CreatedAt),
+                _ => query.OrderByDescending(p => p.IsFeatured).ThenBy(p => p.Id)
+            };
 
-        var categories = await GetCategoriesAsync();
+            var totalCount = await query.CountAsync();
+            var page = Math.Max(1, filter.Page);
+            var pageSize = Math.Clamp(filter.PageSize, 1, 100);
 
-        return new ProductListViewModel
-        {
-            Products = products,
-            Categories = categories,
-            TotalCount = totalCount,
-            CurrentPage = page,
-            PageSize = pageSize,
-            SelectedCategoryId = filter.CategoryId,
-            SelectedSort = filter.SortBy ?? "popular",
-            Query = filter.Query
-        };
+            var products = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            var categories = await GetCategoriesAsync();
+
+            return new ProductListViewModel
+            {
+                Products = products,
+                Categories = categories,
+                TotalCount = totalCount,
+                CurrentPage = page,
+                PageSize = pageSize,
+                SelectedCategoryId = filter.CategoryId,
+                SelectedSort = filter.SortBy ?? "popular",
+                Query = filter.Query
+            };
+        }) ?? new ProductListViewModel();
     }
 
     public async Task<List<Product>> GetRelatedProductsAsync(int categoryId, int currentProductId, int count = 4)

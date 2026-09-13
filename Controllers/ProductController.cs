@@ -29,6 +29,7 @@ namespace El_Shaib.Controllers
 
         // GET: /Product/Filter
         [HttpGet]
+        [ResponseCache(Duration = 60, VaryByQueryKeys = new[] { "Query", "CategoryId", "SortBy", "Page" })]
         public async Task<IActionResult> Filter(ProductFilterViewModel filter)
         {
             var model = await _productService.GetFilteredProductsAsync(filter);

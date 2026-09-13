@@ -520,7 +520,9 @@
                                              loading="lazy" onerror="this.onerror=null;this.src='/images/HeroImage.jpg';" />
                                     </div>
                                     <div class="pd-related-body">
-                                        <h6>@rp.Name</h6>
+                                        <h5>@rp.Name</h5>
+                                        <h6>@rp.Description</h6>
+                                        
                                         <div class="pd-related-price">
                                             <span class="related-price">@rp.Price.ToString("0") ج.م</span>
                                             @if (rp.OldPrice.HasValue && rp.OldPrice > rp.Price)
