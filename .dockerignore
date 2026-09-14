@@ -1,0 +1,12 @@
+bin/
+obj/
+publish/
+out/
+.git/
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+.env
+.env.*
