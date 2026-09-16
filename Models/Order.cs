@@ -37,6 +37,12 @@ public class Order
     [MaxLength(20)]
     public string? DeliveryPhone { get; set; }
 
+    [MaxLength(500)]
+    public string? PaymentReceiptUrl { get; set; }
+
+    [MaxLength(100)]
+    public string? TransactionReference { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public DateTime? DeliveredAt { get; set; }

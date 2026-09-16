@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using El_Shaib.Models;
+using Microsoft.AspNetCore.Http;
 
 namespace El_Shaib.ViewModels;
 
@@ -46,6 +47,15 @@ public class CheckoutViewModel
     [Display(Name = "طريقة الدفع")]
     public PaymentMethod PaymentMethod { get; set; } = PaymentMethod.CashOnDelivery;
 
+    [Display(Name = "صورة إيصال التحويل (إنستاباي)")]
+    public IFormFile? ReceiptImage { get; set; }
+
+    [Display(Name = "رقم العملية / المرجع إن وُجد")]
+    [MaxLength(100)]
+    public string? TransactionReference { get; set; }
+
+    public string? PaymentReceiptUrl { get; set; }
+
     // View data
     public CartViewModel Cart { get; set; } = new();
     public List<DeliveryArea> AvailableDeliveryAreas { get; set; } = new();
@@ -61,6 +71,8 @@ public class OrderConfirmationViewModel
     public string? EstimatedTime { get; set; }
     public OrderStatus Status { get; set; }
     public PaymentMethod PaymentMethod { get; set; }
+    public string? PaymentReceiptUrl { get; set; }
+    public string? TransactionReference { get; set; }
     public decimal SubTotal { get; set; }
     public decimal DeliveryFee { get; set; }
     public decimal Discount { get; set; }

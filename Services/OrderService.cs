@@ -122,6 +122,8 @@ public class OrderService : IOrderService
             DeliveryAddress = fullDeliveryAddress,
             DeliveryPhone = model.Phone,
             Notes = model.AdditionalNotes,
+            PaymentReceiptUrl = model.PaymentReceiptUrl,
+            TransactionReference = model.TransactionReference,
             CreatedAt = DateTime.UtcNow
         };
 
@@ -173,6 +175,8 @@ public class OrderService : IOrderService
             EstimatedTime = "خلال ٢٤ ساعة",
             Status = order.Status,
             PaymentMethod = order.PaymentMethod,
+            PaymentReceiptUrl = order.PaymentReceiptUrl,
+            TransactionReference = order.TransactionReference,
             SubTotal = order.SubTotal,
             DeliveryFee = order.DeliveryFee,
             Discount = order.Discount,

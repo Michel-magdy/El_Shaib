@@ -103,6 +103,26 @@
                             <small class="text-muted d-block">عنوان التوصيل:</small>
                             <span>@Model.DeliveryAddress</span>
                         </div>
+                        <div class="col-sm-6">
+                            <small class="text-muted d-block">طريقة الدفع:</small>
+                            <strong>
+                                @(Model.PaymentMethod switch
+                                {
+                                    El_Shaib.Models.PaymentMethod.Online => "فيزا / إنستاباي (Visa / InstaPay)",
+                                    El_Shaib.Models.PaymentMethod.BankTransfer => "تحويل بنكي / إنستاباي",
+                                    _ => "الدفع عند الاستلام"
+                                })
+                            </strong>
+                        </div>
+                        @if (!string.IsNullOrEmpty(Model.PaymentReceiptUrl))
+                        {
+                            <div class="col-sm-6">
+                                <small class="text-muted d-block">إيصال التحويل:</small>
+                                <a href="@Model.PaymentReceiptUrl" target="_blank" class="badge bg-success-subtle text-success border border-success-subtle text-decoration-none py-2 px-3">
+                                    <i class="fas fa-image me-1"></i> عرض إيصال إنستاباي
+                                </a>
+                            </div>
+                        }
                     </div>
                 </div>
 

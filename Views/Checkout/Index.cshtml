@@ -41,7 +41,7 @@
             </div>
         }
 
-        <form method="post" asp-controller="Checkout" asp-action="PlaceOrder" id="checkoutForm">
+        <form method="post" asp-controller="Checkout" asp-action="PlaceOrder" id="checkoutForm" enctype="multipart/form-data">
             @Html.AntiForgeryToken()
             <div class="row g-4">
                 <!-- Customer & Delivery Information -->
@@ -117,13 +117,13 @@
                             <i class="fas fa-wallet"></i>
                             طريقة الدفع
                         </h4>
-                        <div class="d-flex flex-column gap-3">
+                        <div class="d-flex flex-column gap-3 mb-3">
                             <div class="form-check p-3 border rounded-3 d-flex align-items-center justify-content-between">
                                 <div class="d-flex align-items-center gap-3">
                                     <input class="form-check-input ms-0 me-2" type="radio" asp-for="PaymentMethod" value="CashOnDelivery" id="payCod" checked>
-                                    <label class="form-check-label fw-semibold mb-0" for="payCod">
+                                    <label class="form-check-label fw-semibold mb-0" for="payCod" style="cursor: pointer;">
                                         الدفع نقداً عند الاستلام (COD)
-                                        <small class="d-block text-muted fw-normal">ادفع عند وصول الطلب ومعاينته</small>
+                                        <small class="d-block text-muted fw-normal">ادفع عند استلام ومعاينة طلبك</small>
                                     </label>
                                 </div>
                                 <i class="fas fa-money-bill-wave text-success fs-4"></i>
@@ -131,13 +131,114 @@
 
                             <div class="form-check p-3 border rounded-3 d-flex align-items-center justify-content-between">
                                 <div class="d-flex align-items-center gap-3">
-                                    <input class="form-check-input ms-0 me-2" type="radio" asp-for="PaymentMethod" value="BankTransfer" id="payBank">
-                                    <label class="form-check-label fw-semibold mb-0" for="payBank">
-                                        تحويل بنكي / فودافون كاش / إنستاباي
-                                        <small class="d-block text-muted fw-normal">يتم إرسال إيصال التحويل عبر واتساب</small>
+                                    <input class="form-check-input ms-0 me-2" type="radio" asp-for="PaymentMethod" value="Online" id="payOnline">
+                                    <label class="form-check-label fw-semibold mb-0" for="payOnline" style="cursor: pointer;">
+                                        الدفع بالفيزا / إنستاباي (Visa / InstaPay)
+                                        <small class="d-block text-muted fw-normal">تحويل فوري عبر إنستاباي مع رفع لقطة شاشة لإيصال المعاملة</small>
                                     </label>
                                 </div>
-                                <i class="fas fa-mobile-alt text-primary fs-4"></i>
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="fab fa-cc-visa text-primary fs-4"></i>
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">إنستاباي</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- InstaPay Details & Receipt Upload Container -->
+                        <div id="instapayContainer" class="p-3 p-md-4 rounded-3 border border-success-subtle bg-light mt-2" style="display: none;">
+                            <div class="d-flex align-items-center justify-content-between pb-3 mb-3 border-bottom flex-wrap gap-2">
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="icon-circle icon-circle-sm icon-circle-success">
+                                        <i class="fas fa-bolt"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="fw-bold mb-0 text-success">بيانات التحويل عبر إنستاباي (InstaPay)</h5>
+                                        <small class="text-muted">قم بالتحويل عبر التطبيق ثم ارفع لقطة الشاشة (سكرين شوت) لتأكيد طلبك</small>
+                                    </div>
+                                </div>
+                                <span class="badge bg-success px-3 py-2">تحويل فوري</span>
+                            </div>
+
+                            <!-- Transfer Info Grid -->
+                            <div class="row g-2 mb-3">
+                                <div class="col-sm-6">
+                                    <div class="p-2 px-3 bg-white rounded-2 border d-flex align-items-center justify-content-between">
+                                        <div>
+                                            <small class="text-muted d-block">عنوان إنستاباي (IPA):</small>
+                                            <strong class="font-monospace text-dark" id="ipaValue">elshaib@instapay</strong>
+                                        </div>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary copy-btn" data-copy-target="ipaValue" title="نسخ عنوان إنستاباي">
+                                            <i class="fas fa-copy"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <div class="p-2 px-3 bg-white rounded-2 border d-flex align-items-center justify-content-between">
+                                        <div>
+                                            <small class="text-muted d-block">رقم الهاتف المرتبط:</small>
+                                            <strong class="font-monospace text-dark" dir="ltr" id="phoneValue">01000003000</strong>
+                                        </div>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary copy-btn" data-copy-target="phoneValue" title="نسخ رقم الهاتف">
+                                            <i class="fas fa-copy"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <div class="p-2 px-3 bg-white rounded-2 border d-flex align-items-center justify-content-between">
+                                        <div>
+                                            <small class="text-muted d-block">المبلغ المطلوب تحويله:</small>
+                                            <span class="fw-bold text-success fs-5" id="instapayTotalAmount">@Model.Cart.Total.ToString("0.00") ج.م</span>
+                                        </div>
+                                        <span class="text-muted small"><i class="fas fa-info-circle me-1"></i>مطابق لإجمالي الفاتورة مع التوصيل</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Upload Receipt Zone -->
+                            <div class="mb-3">
+                                <label class="form-label fw-bold d-flex align-items-center gap-1">
+                                    <span>صورة إيصال التحويل (سكرين شوت من تطبيق إنستاباي)</span>
+                                    <span class="text-danger">*</span>
+                                </label>
+
+                                <div class="border border-2 border-dashed rounded-3 p-4 text-center bg-white" id="dropzoneBox" style="cursor: pointer; transition: border-color 0.2s ease;">
+                                    <input type="file" asp-for="ReceiptImage" id="receiptFileInput" accept="image/png,image/jpeg,image/webp" class="d-none" />
+                                    
+                                    <div id="dropzonePrompt">
+                                        <div class="icon-circle icon-circle-md icon-circle-primary mx-auto mb-2">
+                                            <i class="fas fa-cloud-arrow-up fs-4"></i>
+                                        </div>
+                                        <div class="fw-bold text-dark mb-1">اضغط لاختيار صورة الإيصال أو اسحبها وأفلتها هنا</div>
+                                        <small class="text-muted d-block">الصيغ المدعومة: JPG, PNG, WEBP — الحد الأقصى: 5 ميجابايت</small>
+                                    </div>
+
+                                    <!-- Live Image Preview Container -->
+                                    <div id="receiptPreviewBox" class="d-none">
+                                        <div class="d-flex align-items-center justify-content-between p-2 bg-light rounded-3 border">
+                                            <div class="d-flex align-items-center gap-3">
+                                                <img id="receiptPreviewImg" src="#" alt="إيصال التحويل" class="rounded-2" style="width: 60px; height: 60px; object-fit: cover; border: 1px solid #dee2e6;" />
+                                                <div class="text-start">
+                                                    <strong class="d-block small text-truncate" id="receiptFileName" style="max-width: 220px;">إيصال.jpg</strong>
+                                                    <small class="text-muted" id="receiptFileSize">0 KB</small>
+                                                    <span class="badge bg-success-subtle text-success border border-success-subtle ms-2">جاهز للإرسال</span>
+                                                </div>
+                                            </div>
+                                            <button type="button" class="btn btn-sm btn-outline-danger" id="removeReceiptBtn">
+                                                <i class="fas fa-trash-alt me-1"></i> تغيير
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <span asp-validation-for="ReceiptImage" class="text-danger small"></span>
+                                <div id="receiptClientError" class="text-danger small fw-semibold mt-2 d-none">
+                                    <i class="fas fa-exclamation-circle me-1"></i> يرجى رفع صورة إيصال التحويل عبر إنستاباي للمتابعة وتأكيد الطلب.
+                                </div>
+                            </div>
+
+                            <!-- Optional Transaction Reference -->
+                            <div>
+                                <label asp-for="TransactionReference" class="form-label fw-semibold small text-muted">رقم العملية أو المرجع (اختياري)</label>
+                                <input asp-for="TransactionReference" class="form-control" placeholder="مثال: رقم المعاملة من تطبيق إنستاباي" />
                             </div>
                         </div>
                     </div>
@@ -203,35 +304,190 @@
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script>
-        const areaSelect = document.getElementById('deliveryAreaSelect');
-        const deliveryFeeEl = document.getElementById('orderDeliveryFee');
-        const finalTotalEl = document.getElementById('orderFinalTotal');
-        const subtotalEl = document.getElementById('orderSubtotal');
+        document.addEventListener('DOMContentLoaded', function () {
+            // Delivery fee and totals calculation
+            const areaSelect = document.getElementById('deliveryAreaSelect');
+            const deliveryFeeEl = document.getElementById('orderDeliveryFee');
+            const finalTotalEl = document.getElementById('orderFinalTotal');
+            const subtotalEl = document.getElementById('orderSubtotal');
+            const instapayTotalEl = document.getElementById('instapayTotalAmount');
 
-        if (areaSelect && deliveryFeeEl && finalTotalEl && subtotalEl) {
-            const subtotal = parseFloat(subtotalEl.dataset.subtotal) || 0;
-            const freeThreshold = 200;
+            if (areaSelect && deliveryFeeEl && finalTotalEl && subtotalEl) {
+                const subtotal = parseFloat(subtotalEl.dataset.subtotal) || 0;
+                const freeThreshold = 200;
 
-            function updateFee() {
-                const opt = areaSelect.options[areaSelect.selectedIndex];
-                const areaFee = parseFloat(opt.dataset.fee) || 25;
-                const fee = subtotal >= freeThreshold ? 0 : areaFee;
+                function updateFee() {
+                    const opt = areaSelect.options[areaSelect.selectedIndex];
+                    const areaFee = parseFloat(opt.dataset.fee) || 25;
+                    const fee = subtotal >= freeThreshold ? 0 : areaFee;
 
-                if (fee === 0) {
-                    deliveryFeeEl.textContent = 'مجاني';
-                    deliveryFeeEl.className = 'fw-bold text-success';
-                } else {
-                    deliveryFeeEl.textContent = fee.toFixed(2) + ' ج.م';
-                    deliveryFeeEl.className = 'fw-bold';
+                    if (fee === 0) {
+                        deliveryFeeEl.textContent = 'مجاني';
+                        deliveryFeeEl.className = 'fw-bold text-success';
+                    } else {
+                        deliveryFeeEl.textContent = fee.toFixed(2) + ' ج.م';
+                        deliveryFeeEl.className = 'fw-bold';
+                    }
+
+                    const finalTotal = subtotal + fee;
+                    const formattedTotal = finalTotal.toFixed(2) + ' ج.م';
+                    finalTotalEl.textContent = formattedTotal;
+                    if (instapayTotalEl) {
+                        instapayTotalEl.textContent = formattedTotal;
+                    }
                 }
 
-                const finalTotal = subtotal + fee;
-                finalTotalEl.textContent = finalTotal.toFixed(2) + ' ج.م';
+                areaSelect.addEventListener('change', updateFee);
+                updateFee();
             }
 
-            areaSelect.addEventListener('change', updateFee);
-            updateFee();
-        }
+            // Payment method toggle logic
+            const payCodRadio = document.getElementById('payCod');
+            const payOnlineRadio = document.getElementById('payOnline');
+            const instapayContainer = document.getElementById('instapayContainer');
+            const receiptFileInput = document.getElementById('receiptFileInput');
+            const receiptClientError = document.getElementById('receiptClientError');
+            const dropzoneBox = document.getElementById('dropzoneBox');
+            const dropzonePrompt = document.getElementById('dropzonePrompt');
+            const receiptPreviewBox = document.getElementById('receiptPreviewBox');
+            const receiptPreviewImg = document.getElementById('receiptPreviewImg');
+            const receiptFileName = document.getElementById('receiptFileName');
+            const receiptFileSize = document.getElementById('receiptFileSize');
+            const removeReceiptBtn = document.getElementById('removeReceiptBtn');
+            const checkoutForm = document.getElementById('checkoutForm');
+
+            function togglePaymentSection() {
+                if (payOnlineRadio && payOnlineRadio.checked) {
+                    instapayContainer.style.display = 'block';
+                } else {
+                    instapayContainer.style.display = 'none';
+                    if (receiptClientError) receiptClientError.classList.add('d-none');
+                }
+            }
+
+            if (payCodRadio && payOnlineRadio && instapayContainer) {
+                payCodRadio.addEventListener('change', togglePaymentSection);
+                payOnlineRadio.addEventListener('change', togglePaymentSection);
+                togglePaymentSection(); // Initialize state
+            }
+
+            // Copy to clipboard helper
+            document.querySelectorAll('.copy-btn').forEach(btn => {
+                btn.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    const targetId = this.getAttribute('data-copy-target');
+                    const targetEl = document.getElementById(targetId);
+                    if (targetEl) {
+                        const text = targetEl.textContent.trim();
+                        navigator.clipboard.writeText(text).then(() => {
+                            const originalHtml = this.innerHTML;
+                            this.innerHTML = '<i class="fas fa-check text-success"></i>';
+                            setTimeout(() => {
+                                this.innerHTML = originalHtml;
+                            }, 1800);
+                        });
+                    }
+                });
+            });
+
+            // Receipt dropzone and preview logic
+            if (dropzoneBox && receiptFileInput) {
+                dropzoneBox.addEventListener('click', function (e) {
+                    if (e.target.closest('#removeReceiptBtn')) return;
+                    receiptFileInput.click();
+                });
+
+                ['dragenter', 'dragover'].forEach(eventName => {
+                    dropzoneBox.addEventListener(eventName, function (e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        dropzoneBox.classList.add('border-success', 'bg-light');
+                    });
+                });
+
+                ['dragleave', 'drop'].forEach(eventName => {
+                    dropzoneBox.addEventListener(eventName, function (e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        dropzoneBox.classList.remove('border-success', 'bg-light');
+                    });
+                });
+
+                dropzoneBox.addEventListener('drop', function (e) {
+                    const dt = e.dataTransfer;
+                    const files = dt.files;
+                    if (files && files.length > 0) {
+                        receiptFileInput.files = files;
+                        handleFileSelection(files[0]);
+                    }
+                });
+
+                receiptFileInput.addEventListener('change', function () {
+                    if (this.files && this.files.length > 0) {
+                        handleFileSelection(this.files[0]);
+                    }
+                });
+
+                function handleFileSelection(file) {
+                    const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
+                    if (!validTypes.includes(file.type)) {
+                        alert('صيغة الملف غير مدعومة. يرجى اختيار صورة بصيغة JPG أو PNG أو WEBP.');
+                        resetReceipt();
+                        return;
+                    }
+
+                    if (file.size > 5 * 1024 * 1024) {
+                        alert('حجم الصورة كبير جداً. الحد الأقصى المسموح به هو 5 ميجابايت.');
+                        resetReceipt();
+                        return;
+                    }
+
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        receiptPreviewImg.src = e.target.result;
+                        receiptFileName.textContent = file.name;
+                        receiptFileSize.textContent = (file.size / 1024).toFixed(1) + ' KB';
+
+                        dropzonePrompt.classList.add('d-none');
+                        receiptPreviewBox.classList.remove('d-none');
+                        if (receiptClientError) receiptClientError.classList.add('d-none');
+                        dropzoneBox.classList.remove('border-danger');
+                    };
+                    reader.readAsDataURL(file);
+                }
+
+                function resetReceipt() {
+                    receiptFileInput.value = '';
+                    receiptPreviewImg.src = '#';
+                    dropzonePrompt.classList.remove('d-none');
+                    receiptPreviewBox.classList.add('d-none');
+                }
+
+                if (removeReceiptBtn) {
+                    removeReceiptBtn.addEventListener('click', function (e) {
+                        e.stopPropagation();
+                        resetReceipt();
+                    });
+                }
+            }
+
+            // Client-side form submit check
+            if (checkoutForm) {
+                checkoutForm.addEventListener('submit', function (e) {
+                    if (payOnlineRadio && payOnlineRadio.checked) {
+                        if (!receiptFileInput || !receiptFileInput.files || receiptFileInput.files.length === 0) {
+                            e.preventDefault();
+                            if (receiptClientError) receiptClientError.classList.remove('d-none');
+                            if (dropzoneBox) {
+                                dropzoneBox.classList.add('border-danger');
+                                dropzoneBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            }
+                            return false;
+                        }
+                    }
+                });
+            }
+        });
     </script>
 }
 
