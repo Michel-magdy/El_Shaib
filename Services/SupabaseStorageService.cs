@@ -3,8 +3,11 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Supabase.Storage;
 using System.IO;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Text;
+using System.Text.Json;
 
 namespace El_Shaib.Services;
 
@@ -13,8 +16,7 @@ public class SupabaseStorageService : IStorageService
     private readonly IConfiguration _config;
     private readonly IWebHostEnvironment _env;
     private readonly ILogger<SupabaseStorageService> _logger;
-    private Supabase.Client? _supabaseClient;
-    private readonly SemaphoreSlim _initLock = new(1, 1);
+    private static readonly HttpClient _httpClient = new();
 
     public SupabaseStorageService(IConfiguration config, IWebHostEnvironment env, ILogger<SupabaseStorageService> logger)
     {
@@ -23,88 +25,117 @@ public class SupabaseStorageService : IStorageService
         _logger = logger;
     }
 
-    private async Task<Supabase.Client?> GetClientAsync()
-    {
-        if (_supabaseClient != null) return _supabaseClient;
-
-        await _initLock.WaitAsync();
-        try
-        {
-            if (_supabaseClient != null) return _supabaseClient;
-
-            var url = _config["Supabase:Url"];
-            var key = _config["Supabase:Key"];
-
-            if (string.IsNullOrWhiteSpace(url) || string.IsNullOrWhiteSpace(key))
-            {
-                _logger.LogWarning("Supabase Url or Key is missing. Falling back to local storage.");
-                return null;
-            }
-
-            var options = new Supabase.SupabaseOptions
-            {
-                AutoConnectRealtime = false
-            };
-
-            var client = new Supabase.Client(url, key, options);
-            await client.InitializeAsync();
-            _supabaseClient = client;
-            return _supabaseClient;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to initialize Supabase client: {Message}", ex.Message);
-            return null;
-        }
-        finally
-        {
-            _initLock.Release();
-        }
-    }
-
     public async Task<string> UploadReceiptAsync(IFormFile file, string fileName)
     {
+        var url = _config["Supabase:Url"]?.TrimEnd('/');
+        var key = _config["Supabase:Key"];
         var bucket = _config["Supabase:ReceiptBucket"] ?? _config["Supabase:ReceiptsBucket"] ?? "receipts";
+
+        if (string.IsNullOrWhiteSpace(url) || string.IsNullOrWhiteSpace(key))
+        {
+            _logger.LogWarning("Supabase Url or Key is missing from configuration. Falling back to local storage.");
+            return await UploadLocallyAsync(file, fileName);
+        }
 
         try
         {
-            var client = await GetClientAsync();
-            if (client != null)
+            using var memoryStream = new MemoryStream();
+            await file.CopyToAsync(memoryStream);
+            var bytes = memoryStream.ToArray();
+            var contentType = string.IsNullOrWhiteSpace(file.ContentType) ? "image/jpeg" : file.ContentType;
+
+            // Ensure bucket exists in Supabase
+            await EnsureBucketExistsAsync(url, key, bucket);
+
+            // Attempt upload to target bucket (e.g. receipts)
+            var uploadSuccess = await UploadToObjectStorageAsync(url, key, bucket, fileName, bytes, contentType);
+            if (uploadSuccess)
             {
-                // Ensure bucket exists or attempt creation (service role allows this)
-                try
-                {
-                    await client.Storage.CreateBucket(bucket, new BucketUpsertOptions { Public = true });
-                }
-                catch
-                {
-                    // Bucket may already exist or creation is managed via dashboard
-                }
-
-                using var memoryStream = new MemoryStream();
-                await file.CopyToAsync(memoryStream);
-                var bytes = memoryStream.ToArray();
-
-                var fileOptions = new Supabase.Storage.FileOptions
-                {
-                    ContentType = file.ContentType,
-                    Upsert = true
-                };
-
-                await client.Storage.From(bucket).Upload(bytes, fileName, fileOptions);
-
-                var publicUrl = client.Storage.From(bucket).GetPublicUrl(fileName);
+                var publicUrl = $"{url}/storage/v1/object/public/{bucket}/{fileName}";
                 _logger.LogInformation("Receipt successfully uploaded to Supabase Storage: {Url}", publicUrl);
                 return publicUrl;
             }
+
+            // If receipts bucket failed (e.g. not created yet), try the existing products bucket
+            var fallbackBucket = _config["Supabase:Bucket"] ?? "products";
+            if (!string.Equals(bucket, fallbackBucket, StringComparison.OrdinalIgnoreCase))
+            {
+                _logger.LogWarning("Attempting upload to fallback bucket '{FallbackBucket}/receipts/{FileName}'", fallbackBucket, fileName);
+                var fallbackSuccess = await UploadToObjectStorageAsync(url, key, fallbackBucket, $"receipts/{fileName}", bytes, contentType);
+                if (fallbackSuccess)
+                {
+                    var fallbackUrl = $"{url}/storage/v1/object/public/{fallbackBucket}/receipts/{fileName}";
+                    _logger.LogInformation("Receipt successfully uploaded to Supabase Storage (fallback bucket): {Url}", fallbackUrl);
+                    return fallbackUrl;
+                }
+            }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to upload receipt to Supabase Storage. Falling back to local disk: {Message}", ex.Message);
+            _logger.LogError(ex, "Exception occurred during Supabase upload: {Message}", ex.Message);
         }
 
-        // Fallback to local storage so checkout is never interrupted
+        // Final fallback: save locally so user checkout flow is NEVER blocked
+        _logger.LogWarning("Supabase upload failed. Saving receipt to local storage.");
         return await UploadLocallyAsync(file, fileName);
+    }
+
+    private async Task EnsureBucketExistsAsync(string url, string key, string bucket)
+    {
+        try
+        {
+            var request = new HttpRequestMessage(HttpMethod.Post, $"{url}/storage/v1/bucket")
+            {
+                Content = new StringContent(
+                    JsonSerializer.Serialize(new { id = bucket, name = bucket, @public = true }),
+                    Encoding.UTF8,
+                    "application/json"
+                )
+            };
+            request.Headers.Add("apikey", key);
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", key);
+
+            var response = await _httpClient.SendAsync(request);
+            if (response.IsSuccessStatusCode)
+            {
+                _logger.LogInformation("Supabase bucket '{Bucket}' created or verified successfully.", bucket);
+            }
+        }
+        catch
+        {
+            // Bucket may already exist or creation managed via dashboard
+        }
+    }
+
+    private async Task<bool> UploadToObjectStorageAsync(string url, string key, string bucket, string objectPath, byte[] bytes, string contentType)
+    {
+        try
+        {
+            var uploadUrl = $"{url}/storage/v1/object/{bucket}/{objectPath}";
+            using var request = new HttpRequestMessage(HttpMethod.Post, uploadUrl);
+            request.Headers.Add("apikey", key);
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", key);
+            request.Headers.Add("x-upsert", "true");
+
+            var byteContent = new ByteArrayContent(bytes);
+            byteContent.Headers.ContentType = new MediaTypeHeaderValue(contentType);
+            request.Content = byteContent;
+
+            var response = await _httpClient.SendAsync(request);
+            if (response.IsSuccessStatusCode)
+            {
+                return true;
+            }
+
+            var errorBody = await response.Content.ReadAsStringAsync();
+            _logger.LogWarning("Supabase upload to {Url} returned status {Status}: {Body}", uploadUrl, response.StatusCode, errorBody);
+            return false;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed HTTP upload to Supabase: {Message}", ex.Message);
+            return false;
+        }
     }
 
     private async Task<string> UploadLocallyAsync(IFormFile file, string fileName)
