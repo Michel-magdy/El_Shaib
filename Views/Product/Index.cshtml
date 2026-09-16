@@ -74,14 +74,6 @@
                     </select>
                     <i class="fas fa-chevron-down"></i>
                 </div>
-                <div class="products-sort-dropdown" style="min-width: 140px; flex-shrink: 0;">
-                    <select name="PageSize" id="catalogPageSizeSelect" aria-label="عدد المنتجات المعروضة بالصفحة">
-                        <option value="4" selected="@(Model.PageSize == 4)">4 منتجات / ص</option>
-                        <option value="6" selected="@(Model.PageSize == 6)">6 منتجات / ص</option>
-                        <option value="8" selected="@(Model.PageSize == 8)">8 منتجات / ص</option>
-                    </select>
-                    <i class="fas fa-chevron-down"></i>
-                </div>
             </div>
 
             <!-- Category Filter Tags -->
@@ -192,7 +184,6 @@
             const searchInput = document.getElementById('catalogSearchInput');
             const clearSearchBtn = document.getElementById('clearSearchBtn');
             const sortSelect = document.getElementById('catalogSortSelect');
-            const pageSizeSelect = document.getElementById('catalogPageSizeSelect');
             const hiddenCategoryId = document.getElementById('hiddenCategoryId');
             const hiddenPage = document.getElementById('hiddenPage');
             const hiddenPageSize = document.getElementById('hiddenPageSize');
@@ -211,7 +202,7 @@
                 const queryVal = searchInput.value.trim();
                 const categoryVal = hiddenCategoryId.value.trim();
                 const sortVal = sortSelect.value.trim();
-                const pageSizeVal = pageSizeSelect ? pageSizeSelect.value.trim() : (hiddenPageSize.value || '6');
+                const pageSizeVal = '8';
                 hiddenPageSize.value = pageSizeVal;
 
                 if (queryVal) params.append('Query', queryVal);
@@ -327,13 +318,6 @@
                 fetchProducts(1);
             });
 
-            // 2b. PageSize dropdown change
-            if (pageSizeSelect) {
-                pageSizeSelect.addEventListener('change', function () {
-                    fetchProducts(1);
-                });
-            }
-
             // 3. Category tags click
             categoryTags.forEach(tag => {
                 tag.addEventListener('click', function (e) {
@@ -385,7 +369,6 @@
                     if (clearSearchBtn) clearSearchBtn.classList.add('d-none');
                     hiddenCategoryId.value = '';
                     sortSelect.value = 'popular';
-                    if (pageSizeSelect) pageSizeSelect.value = '6';
 
                     categoryTags.forEach(t => t.classList.remove('active'));
                     const allTag = document.querySelector('.ajax-category-tag[data-category-id=""]');
@@ -488,7 +471,7 @@
             const initQuery = searchInput.value.trim();
             const initCat = hiddenCategoryId.value.trim();
             const initSort = sortSelect.value.trim();
-            const initPageSize = pageSizeSelect ? pageSizeSelect.value.trim() : (hiddenPageSize.value || '6');
+            const initPageSize = '8';
             const initPage = parseInt(hiddenPage.value || '1');
 
             window.history.replaceState({
@@ -506,10 +489,7 @@
                     searchInput.value = state.query || '';
                     hiddenCategoryId.value = state.categoryId || '';
                     sortSelect.value = state.sortBy || 'popular';
-                    if (pageSizeSelect && state.pageSize) {
-                        pageSizeSelect.value = state.pageSize;
-                        hiddenPageSize.value = state.pageSize;
-                    }
+                    hiddenPageSize.value = '8';
                     if (clearSearchBtn) {
                         clearSearchBtn.classList.toggle('d-none', !searchInput.value.trim());
                     }
@@ -525,13 +505,7 @@
                     searchInput.value = urlParams.get('Query') || '';
                     hiddenCategoryId.value = urlParams.get('CategoryId') || '';
                     sortSelect.value = urlParams.get('SortBy') || 'popular';
-                    if (pageSizeSelect && urlParams.has('PageSize')) {
-                        pageSizeSelect.value = urlParams.get('PageSize');
-                        hiddenPageSize.value = pageSizeSelect.value;
-                    } else if (pageSizeSelect) {
-                        pageSizeSelect.value = '6';
-                        hiddenPageSize.value = '6';
-                    }
+                    hiddenPageSize.value = '8';
                     if (clearSearchBtn) {
                         clearSearchBtn.classList.toggle('d-none', !searchInput.value.trim());
                     }

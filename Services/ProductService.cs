@@ -65,7 +65,7 @@ public class ProductService : GenericService<Product>, IProductService
     public async Task<ProductListViewModel> GetFilteredProductsAsync(ProductFilterViewModel filter)
     {
         var page = Math.Max(1, filter.Page);
-        var pageSize = filter.PageSize > 0 ? Math.Clamp(filter.PageSize, 1, 100) : 6;
+        const int pageSize = 8;
         var queryTerm = filter.Query?.Trim();
         var categoryId = (filter.CategoryId.HasValue && filter.CategoryId.Value > 0) ? filter.CategoryId.Value : (int?)null;
         var sortBy = string.IsNullOrWhiteSpace(filter.SortBy) ? "popular" : filter.SortBy.Trim();
