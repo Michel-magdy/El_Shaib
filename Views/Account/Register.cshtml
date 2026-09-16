@@ -7,10 +7,10 @@
     <div class="container" style="max-width: 550px;">
         <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 bg-white">
             <div class="text-center mb-4">
-                <div class="mx-auto mb-3" style="width: 64px; height: 64px; background: #e8f5e9; color: var(--primary, #1b4332); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.75rem;">
+                <div class="icon-circle icon-circle-lg icon-circle-primary mx-auto mb-3">
                     <i class="fas fa-user-plus"></i>
                 </div>
-                <h1 class="h4 fw-bold mb-1" style="color: var(--primary-dark, #0d2818);">إنشاء حساب جديد</h1>
+                <h1 class="h4 fw-bold mb-1">إنشاء حساب جديد</h1>
                 <p class="text-muted small">سجّل حسابك برقم الهاتف واستمتع بطلب أسهل وتتبع فوري للشحنات</p>
             </div>
 
@@ -73,13 +73,13 @@
                     <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
                 </div>
 
-                <button type="submit" class="btn btn-success btn-lg w-100 py-3 fw-bold shadow-sm mb-3" style="background-color: var(--primary, #1b4332); border: none;">
+                <button type="submit" class="btn btn-primary-custom btn-lg w-100 py-3 mb-3">
                     <i class="fas fa-user-check me-1"></i> إنشاء الحساب
                 </button>
 
                 <div class="text-center">
                     <span class="text-muted small">لديك حساب بالفعل؟ </span>
-                    <a asp-controller="Account" asp-action="Login" asp-route-returnUrl="@Model.ReturnUrl" class="fw-bold text-decoration-none" style="color: var(--primary, #1b4332);">
+                    <a asp-controller="Account" asp-action="Login" asp-route-returnUrl="@Model.ReturnUrl" class="fw-bold text-decoration-none">
                         تسجيل الدخول بالهاتف
                     </a>
                 </div>

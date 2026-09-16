@@ -2,31 +2,6 @@
    El Shaib - Product Details Stylesheet (Modern & Complete)
    ======================================================== */
 
-/* --- Breadcrumb Subnav --- */
-.pd-breadcrumb {
-    background: var(--primary-darkest, #1B4332);
-    padding: 0.75rem 0;
-}
-.breadcrumb-list {
-    display: flex;
-    align-items: center;
-    gap: 0.45rem;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-    flex-wrap: wrap;
-}
-.breadcrumb-list li { display: inline-flex; align-items: center; gap: 0.45rem; font-size: 0.82rem; }
-.breadcrumb-list a {
-    color: rgba(255, 255, 255, 0.75);
-    text-decoration: none;
-    font-weight: 600;
-    transition: color 0.2s;
-}
-.breadcrumb-list a:hover { color: #fff; }
-.breadcrumb-list .active span { color: #fff; font-weight: 700; }
-.breadcrumb-sep { font-size: 0.6rem; color: rgba(255, 255, 255, 0.4); }
-
 /* --- Main Details Section --- */
 .pd-main {
     padding: 2.5rem 0 3rem;
@@ -65,18 +40,7 @@
     gap: 0.4rem;
     z-index: 2;
 }
-.pd-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.3rem;
-    padding: 0.3rem 0.75rem;
-    border-radius: 8px;
-    font-size: 0.75rem;
-    font-weight: 800;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.12);
-}
-.pd-badge--discount { background: #ef4444; color: #fff; }
-.pd-badge--featured { background: #f59e0b; color: #fff; }
+/* Badges on Gallery (styling provided by components.css .pd-badge) */
 
 /* Floating Wishlist Button */
 .pd-wishlist-btn {
@@ -292,61 +256,7 @@
     gap: 0.75rem;
 }
 
-/* Quantity Controls */
-.pd-qty {
-    display: inline-flex;
-    align-items: center;
-    height: 46px;
-    border: 1.5px solid #d8f3dc;
-    border-radius: 12px;
-    background: #f8fafc;
-    overflow: hidden;
-}
-.pd-qty:focus-within { border-color: var(--primary, #40916C); }
-.pd-qty-btn {
-    width: 36px;
-    height: 100%;
-    border: none;
-    background: transparent;
-    color: var(--primary-darkest, #1B4332);
-    font-size: 0.85rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: background 0.15s;
-}
-.pd-qty-btn:hover { background: var(--light-green, #D8F3DC); }
-.pd-qty-input {
-    width: 46px;
-    height: 100%;
-    border: none;
-    background: transparent;
-    text-align: center;
-    font-family: var(--font-family);
-    font-weight: 800;
-    font-size: 0.95rem;
-    color: var(--primary-darkest, #1B4332);
-    -moz-appearance: textfield;
-}
-.pd-qty-input::-webkit-outer-spin-button, .pd-qty-input::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-}
-.pd-qty--disabled {
-    opacity: 0.6;
-    background: #f1f5f9;
-    border-color: #e2e8f0;
-}
-.pd-qty-btn:disabled {
-    cursor: not-allowed;
-    color: #94a3b8;
-}
-.pd-qty-btn:disabled:hover { background: transparent; }
-.pd-qty-input:disabled {
-    cursor: not-allowed;
-    color: #94a3b8;
-}
+/* Quantity Controls (styling provided by components.css .pd-qty) */
 
 /* Primary Add-to-Cart Button */
 .pd-add-cart-btn {

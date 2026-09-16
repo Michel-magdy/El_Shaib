@@ -13,8 +13,9 @@
     var inStock = Model.StockQuantity > 0;
 }
 
-<!-- ========== PRODUCT DETAILS CSS ========== -->
-<link rel="stylesheet" href="~/css/product-details.css" asp-append-version="true" />
+@section Styles {
+    <link rel="stylesheet" href="~/css/product-details.css" asp-append-version="true" />
+}
 
 <!-- ========== BREADCRUMB ========== -->
 <div class="pd-breadcrumb">

@@ -3,9 +3,6 @@
     ViewData["Title"] = "قائمة المفضلة";
 }
 
-<link rel="stylesheet" href="~/css/products.css" asp-append-version="true" />
-<link rel="stylesheet" href="~/css/cart.css" asp-append-version="true" />
-
 <div class="cart-breadcrumb">
     <div class="container">
         <nav aria-label="مسار التنقل">
@@ -34,14 +31,14 @@
 
         @if (Model == null || Model.Count == 0)
         {
-            <div class="card border-0 shadow-sm rounded-4 p-5 text-center my-4">
-                <div class="mx-auto mb-3" style="width: 70px; height: 70px; background-color: #ffebee; color: #e53935; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem;">
+            <div class="empty-state my-4">
+                <div class="icon-circle icon-circle-xl icon-circle-danger mx-auto mb-3">
                     <i class="far fa-heart"></i>
                 </div>
                 <h3 class="h5 fw-bold mb-2">قائمة المفضلة فارغة حالياً</h3>
                 <p class="text-muted mb-4">لم تقم بإضافة أي منتجات إلى المفضلة بعد. تصفح منتجاتنا الطازجة وأضف ما يعجبك!</p>
                 <div>
-                    <a asp-controller="Product" asp-action="Index" class="btn btn-success btn-lg px-4" style="background-color: var(--primary, #1b4332); border: none;">
+                    <a asp-controller="Product" asp-action="Index" class="btn btn-primary-custom px-4">
                         تسوق الآن
                     </a>
                 </div>
@@ -89,7 +86,7 @@
                             </div>
 
                             <div class="p-3 pt-0">
-                                <button class="btn btn-success w-100 py-2 fw-bold btn-add-cart-from-wishlist" data-product-id="@product.Id" style="background-color: var(--primary, #1b4332); border: none;">
+                                <button class="btn btn-primary-custom w-100 py-2 btn-add-cart-from-wishlist" data-product-id="@product.Id">
                                     <i class="fas fa-cart-plus me-1"></i> أضف للسلة
                                 </button>
                             </div>

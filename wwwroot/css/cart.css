@@ -2,44 +2,6 @@
    El Shaib - Cart & Checkout Stylesheet (Modern & Lean)
    ======================================================== */
 
-/* --- Subnav Breadcrumb --- */
-.cart-breadcrumb {
-    background: var(--primary-darkest, #1B4332);
-    padding: 0.75rem 0;
-}
-.cart-breadcrumb .breadcrumb-list {
-    display: flex;
-    align-items: center;
-    gap: 0.45rem;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-    flex-wrap: wrap;
-}
-.cart-breadcrumb .breadcrumb-list li {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.45rem;
-    font-size: 0.82rem;
-}
-.cart-breadcrumb .breadcrumb-list a {
-    color: rgba(255, 255, 255, 0.75);
-    text-decoration: none;
-    font-weight: 600;
-    transition: color 0.2s;
-}
-.cart-breadcrumb .breadcrumb-list a:hover {
-    color: #fff;
-}
-.cart-breadcrumb .breadcrumb-list .active span {
-    color: #fff;
-    font-weight: 700;
-}
-.cart-breadcrumb .breadcrumb-sep {
-    font-size: 0.6rem;
-    color: rgba(255, 255, 255, 0.4);
-}
-
 /* --- Cart Header --- */
 .cart-header-section {
     background: linear-gradient(135deg, #1B4332 0%, #0d3520 60%, #006C48 100%);
@@ -90,42 +52,7 @@
     min-height: 480px;
 }
 
-/* Empty Cart State */
-.cart-empty {
-    text-align: center;
-    padding: 4.5rem 2rem;
-    background: #fff;
-    border-radius: 20px;
-    border: 1px solid #E2E8F0;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
-    max-width: 620px;
-    margin: 0 auto;
-}
-.cart-empty-icon {
-    width: 90px;
-    height: 90px;
-    background: #D8F3DC;
-    color: #1B4332;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto 1.5rem;
-    font-size: 2.4rem;
-    box-shadow: 0 8px 24px rgba(27, 67, 50, 0.12);
-}
-.cart-empty h3 {
-    font-size: 1.45rem;
-    font-weight: 800;
-    color: #012D1D;
-    margin-bottom: 0.6rem;
-}
-.cart-empty p {
-    font-size: 0.95rem;
-    color: #64748B;
-    margin-bottom: 1.75rem;
-    line-height: 1.6;
-}
+/* Empty Cart Button (container and icon provided by components.css) */
 .cart-empty-btn {
     background: linear-gradient(135deg, #1B4332 0%, #006C48 100%);
     color: #fff;
@@ -273,59 +200,10 @@
     color: #1B4332;
 }
 
-/* Item Quantity Controls (Pill Design) */
+/* Item Quantity Controls (styling provided by components.css .ci-qty) */
 .cart-item-qty {
     display: flex;
     align-items: center;
-}
-.ci-qty {
-    display: inline-flex;
-    align-items: center;
-    height: 38px;
-    border: 1.5px solid #D8F3DC;
-    border-radius: 10px;
-    background: #F8FAFC;
-    overflow: hidden;
-    transition: border-color 0.2s, box-shadow 0.2s;
-}
-.ci-qty:focus-within {
-    border-color: #40916C;
-    box-shadow: 0 0 0 3px rgba(64, 145, 108, 0.15);
-}
-.ci-qty-btn {
-    width: 32px;
-    height: 100%;
-    border: none;
-    background: transparent;
-    color: #1B4332;
-    font-size: 0.78rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: background 0.15s, color 0.15s;
-}
-.ci-qty-btn:hover {
-    background: #D8F3DC;
-    color: #006C48;
-}
-.ci-qty-input {
-    width: 40px;
-    height: 100%;
-    border: none;
-    background: transparent;
-    text-align: center;
-    font-family: inherit;
-    font-weight: 800;
-    font-size: 0.92rem;
-    color: #1B4332;
-    outline: none;
-    -moz-appearance: textfield;
-}
-.ci-qty-input::-webkit-outer-spin-button,
-.ci-qty-input::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
 }
 
 /* Remove Action Button */

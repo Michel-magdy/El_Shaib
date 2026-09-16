@@ -59,8 +59,7 @@
             <!-- Total Orders -->
             <div class="col-6 col-md-4 col-lg">
                 <div class="card border-0 shadow-sm rounded-4 p-3 h-100 bg-white text-center">
-                    <div class="mx-auto mb-2 d-flex align-items-center justify-content-center rounded-circle"
-                         style="width: 48px; height: 48px; background-color: #e8f5e9; color: #1b4332; font-size: 1.25rem;">
+                    <div class="icon-circle icon-circle-md icon-circle-primary mx-auto mb-2">
                         <i class="fas fa-boxes-stacked"></i>
                     </div>
                     <div class="fs-4 fw-bold text-dark mb-0">@totalOrders</div>
@@ -71,8 +70,7 @@
             <!-- In Progress / Pending -->
             <div class="col-6 col-md-4 col-lg">
                 <div class="card border-0 shadow-sm rounded-4 p-3 h-100 bg-white text-center">
-                    <div class="mx-auto mb-2 d-flex align-items-center justify-content-center rounded-circle"
-                         style="width: 48px; height: 48px; background-color: #fffbeb; color: #d97706; font-size: 1.25rem;">
+                    <div class="icon-circle icon-circle-md icon-circle-warning mx-auto mb-2">
                         <i class="fas fa-clock-rotate-left"></i>
                     </div>
                     <div class="fs-4 fw-bold text-dark mb-0">@inProgressOrders</div>
@@ -83,8 +81,7 @@
             <!-- Out For Delivery -->
             <div class="col-6 col-md-4 col-lg">
                 <div class="card border-0 shadow-sm rounded-4 p-3 h-100 bg-white text-center">
-                    <div class="mx-auto mb-2 d-flex align-items-center justify-content-center rounded-circle"
-                         style="width: 48px; height: 48px; background-color: #f0f9ff; color: #0284c7; font-size: 1.25rem;">
+                    <div class="icon-circle icon-circle-md icon-circle-info mx-auto mb-2">
                         <i class="fas fa-truck-fast"></i>
                     </div>
                     <div class="fs-4 fw-bold text-dark mb-0">@outForDeliveryOrders</div>
@@ -95,8 +92,7 @@
             <!-- Delivered -->
             <div class="col-6 col-md-6 col-lg">
                 <div class="card border-0 shadow-sm rounded-4 p-3 h-100 bg-white text-center">
-                    <div class="mx-auto mb-2 d-flex align-items-center justify-content-center rounded-circle"
-                         style="width: 48px; height: 48px; background-color: #ecfdf5; color: #10b981; font-size: 1.25rem;">
+                    <div class="icon-circle icon-circle-md icon-circle-success mx-auto mb-2">
                         <i class="fas fa-circle-check"></i>
                     </div>
                     <div class="fs-4 fw-bold text-dark mb-0">@deliveredOrders</div>
@@ -106,9 +102,8 @@
 
             <!-- Total Spent -->
             <div class="col-12 col-md-6 col-lg">
-                <div class="card border-0 shadow-sm rounded-4 p-3 h-100 bg-white text-center" style="border-right: 4px solid #1b4332 !important;">
-                    <div class="mx-auto mb-2 d-flex align-items-center justify-content-center rounded-circle"
-                         style="width: 48px; height: 48px; background-color: #fef3c7; color: #b45309; font-size: 1.25rem;">
+                <div class="card border-0 shadow-sm rounded-4 p-3 h-100 bg-white text-center" style="border-right: 4px solid var(--primary-darkest, #1b4332) !important;">
+                    <div class="icon-circle icon-circle-md icon-circle-warning mx-auto mb-2">
                         <i class="fas fa-wallet"></i>
                     </div>
                     <div class="fs-4 fw-bold text-success mb-0">@totalSpent.ToString("0.00") <small class="fs-6 text-muted">ج.م</small></div>
@@ -120,16 +115,16 @@
         @if (totalOrders == 0)
         {
             <!-- Empty State -->
-            <div class="card border-0 shadow-sm rounded-4 p-5 text-center my-4 bg-white">
-                <div class="mx-auto mb-3" style="width: 80px; height: 80px; background-color: #e8f5e9; color: #1b4332; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.25rem;">
+            <div class="empty-state my-4">
+                <div class="icon-circle icon-circle-xl icon-circle-primary mx-auto mb-3">
                     <i class="fas fa-basket-shopping"></i>
                 </div>
-                <h2 class="h4 fw-bold mb-2" style="color: #1b4332;">لا توجد طلبات سابقة حتى الآن</h2>
+                <h2 class="h4 fw-bold mb-2">لا توجد طلبات سابقة حتى الآن</h2>
                 <p class="text-muted mb-4 mx-auto" style="max-width: 480px;">
                     لم تقم بتسجيل أي طلب بعد. تصفح منتجات مزارع الشايب من البيض الطازج والمنتجات الطبيعية وتمتع بتجربة توصيل سريعة ومميزة!
                 </p>
                 <div>
-                    <a asp-controller="Product" asp-action="Index" class="btn btn-success btn-lg px-5 py-3 rounded-pill fw-bold shadow-sm" style="background-color: #1b4332; border: none;">
+                    <a asp-controller="Product" asp-action="Index" class="btn btn-primary-custom btn-lg px-5 py-3 shadow-sm">
                         <i class="fas fa-store me-1"></i> تسوق المنتجات الآن
                     </a>
                 </div>

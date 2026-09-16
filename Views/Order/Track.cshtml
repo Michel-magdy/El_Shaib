@@ -12,7 +12,7 @@
             <!-- Search Form -->
             <form method="get" asp-controller="Order" asp-action="Track" class="d-flex gap-2 mx-auto mt-4" style="max-width: 500px;">
                 <input type="text" name="orderNumber" class="form-control form-control-lg" placeholder="مثال: SHP-20260913-1234" value="@Context.Request.Query["orderNumber"]" required />
-                <button type="submit" class="btn btn-success btn-lg px-4" style="background-color: var(--primary, #1b4332); border: none;">
+                <button type="submit" class="btn btn-primary-custom px-4">
                     <i class="fas fa-search me-1"></i> تتبع
                 </button>
             </form>
