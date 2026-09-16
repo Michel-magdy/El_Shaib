@@ -54,25 +54,31 @@
         <form method="get" asp-controller="Product" asp-action="Index" id="catalogFilterForm" onsubmit="return false;">
             <input type="hidden" name="CategoryId" value="@Model.SelectedCategoryId" id="hiddenCategoryId" />
             <input type="hidden" name="Page" value="@Model.CurrentPage" id="hiddenPage" />
+            <input type="hidden" name="PageSize" value="@Model.PageSize" id="hiddenPageSize" />
 
             <!-- Search Row -->
             <div class="products-search-row">
                 <div class="products-search-box">
                     <i class="fas fa-search search-icon"></i>
                     <input type="text" name="Query" id="catalogSearchInput" value="@Model.Query" placeholder="ابحث بالاسم، الحجم، نوع التغليف..." autocomplete="off" />
-                    @if (!string.IsNullOrWhiteSpace(Model.Query))
-                    {
-                        <button type="button" class="btn btn-sm btn-link text-muted position-absolute end-0 top-50 translate-middle-y me-3" id="clearSearchBtn" title="مسح البحث">
-                            <i class="fas fa-times-circle"></i>
-                        </button>
-                    }
+                    <button type="button" class="btn btn-sm btn-link text-muted position-absolute end-0 top-50 translate-middle-y me-3 @(string.IsNullOrWhiteSpace(Model.Query) ? "d-none" : "")" id="clearSearchBtn" title="مسح البحث">
+                        <i class="fas fa-times-circle"></i>
+                    </button>
                 </div>
                 <div class="products-sort-dropdown">
-                    <select name="SortBy" id="catalogSortSelect">
+                    <select name="SortBy" id="catalogSortSelect" aria-label="ترتيب المنتجات">
                         <option value="popular" selected="@(Model.SelectedSort == "popular")">ترتيب حسب: الأكثر طلباً</option>
                         <option value="price_asc" selected="@(Model.SelectedSort == "price_asc")">الأقل سعراً</option>
                         <option value="price_desc" selected="@(Model.SelectedSort == "price_desc")">الأعلى سعراً</option>
                         <option value="newest" selected="@(Model.SelectedSort == "newest")">الأحدث</option>
+                    </select>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="products-sort-dropdown" style="min-width: 140px; flex-shrink: 0;">
+                    <select name="PageSize" id="catalogPageSizeSelect" aria-label="عدد المنتجات المعروضة بالصفحة">
+                        <option value="4" selected="@(Model.PageSize == 4)">4 منتجات / ص</option>
+                        <option value="6" selected="@(Model.PageSize == 6)">6 منتجات / ص</option>
+                        <option value="8" selected="@(Model.PageSize == 8)">8 منتجات / ص</option>
                     </select>
                     <i class="fas fa-chevron-down"></i>
                 </div>
@@ -84,14 +90,14 @@
                     <i class="fas fa-filter"></i>
                     التصنيف:
                 </span>
-                <a href="#"
+                <a href="@Url.Action("Index", "Product", new { Page = 1, PageSize = Model.PageSize, SortBy = Model.SelectedSort, Query = Model.Query })"
                    data-category-id=""
                    class="filter-tag ajax-category-tag @(!Model.SelectedCategoryId.HasValue ? "active" : "")">
                     كل المنتجات
                 </a>
                 @foreach (var cat in Model.Categories)
                 {
-                    <a href="#"
+                    <a href="@Url.Action("Index", "Product", new { CategoryId = cat.Id, Page = 1, PageSize = Model.PageSize, SortBy = Model.SelectedSort, Query = Model.Query })"
                        data-category-id="@cat.Id"
                        class="filter-tag ajax-category-tag @(Model.SelectedCategoryId == cat.Id ? "active" : "")">
                         @cat.Name
@@ -184,9 +190,12 @@
         document.addEventListener('DOMContentLoaded', function () {
             const form = document.getElementById('catalogFilterForm');
             const searchInput = document.getElementById('catalogSearchInput');
+            const clearSearchBtn = document.getElementById('clearSearchBtn');
             const sortSelect = document.getElementById('catalogSortSelect');
+            const pageSizeSelect = document.getElementById('catalogPageSizeSelect');
             const hiddenCategoryId = document.getElementById('hiddenCategoryId');
             const hiddenPage = document.getElementById('hiddenPage');
+            const hiddenPageSize = document.getElementById('hiddenPageSize');
             const gridContainer = document.getElementById('productsGridContainer');
             const loadingOverlay = document.getElementById('productsLoadingOverlay');
             const categoryTags = document.querySelectorAll('.ajax-category-tag');
@@ -195,18 +204,26 @@
             let activeAbortController = null;
 
             // Fetch products via AJAX partial view
-            async function fetchProducts(page = 1, updateHistory = true) {
+            async function fetchProducts(page = 1, updateHistory = true, scrollToTop = false) {
                 hiddenPage.value = page;
 
                 const params = new URLSearchParams();
                 const queryVal = searchInput.value.trim();
                 const categoryVal = hiddenCategoryId.value.trim();
                 const sortVal = sortSelect.value.trim();
+                const pageSizeVal = pageSizeSelect ? pageSizeSelect.value.trim() : (hiddenPageSize.value || '6');
+                hiddenPageSize.value = pageSizeVal;
 
                 if (queryVal) params.append('Query', queryVal);
                 if (categoryVal) params.append('CategoryId', categoryVal);
                 if (sortVal && sortVal !== 'popular') params.append('SortBy', sortVal);
-                if (page > 1) params.append('Page', page);
+                params.append('PageSize', pageSizeVal);
+                params.append('Page', page);
+
+                // Update clear search button visibility
+                if (clearSearchBtn) {
+                    clearSearchBtn.classList.toggle('d-none', !queryVal);
+                }
 
                 const queryString = params.toString();
                 const filterUrl = '/Product/Filter?' + queryString;
@@ -231,32 +248,9 @@
                     if (response.ok) {
                         const html = await response.text();
 
-                        // Pre-cache images before inserting HTML to prevent blank flash
-                        const tempDiv = document.createElement('div');
-                        tempDiv.innerHTML = html;
-                        const imgElements = tempDiv.querySelectorAll('img');
-                        const imagePromises = Array.from(imgElements).map(img => {
-                            return new Promise(resolve => {
-                                if (!img.src || img.src === window.location.href) {
-                                    resolve();
-                                    return;
-                                }
-                                const preload = new Image();
-                                preload.onload = resolve;
-                                preload.onerror = resolve; // Don't block on failed images
-                                preload.src = img.src;
-                                // Resolve after 3s max to avoid blocking forever
-                                setTimeout(resolve, 3000);
-                            });
-                        });
-
-                        // Wait for images to pre-cache (with 3s timeout per image)
-                        await Promise.all(imagePromises);
-
-                        // Smooth swap: fade out, replace, fade in
-                        gridContainer.style.opacity = '0';
+                        // Fast, smooth swap
+                        gridContainer.style.opacity = '0.3';
                         gridContainer.style.transition = 'opacity 0.15s ease';
-                        await new Promise(r => setTimeout(r, 150));
 
                         gridContainer.innerHTML = html;
                         gridContainer.style.opacity = '1';
@@ -266,8 +260,18 @@
                                 query: queryVal,
                                 categoryId: categoryVal,
                                 sortBy: sortVal,
+                                pageSize: pageSizeVal,
                                 page: page
                             }, '', browserUrl);
+                        }
+
+                        if (scrollToTop) {
+                            const section = document.getElementById('productsSection');
+                            if (section) {
+                                const yOffset = -80;
+                                const y = section.getBoundingClientRect().top + window.pageYOffset + yOffset;
+                                window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
+                            }
                         }
                     }
                 } catch (err) {
@@ -279,20 +283,41 @@
                 }
             }
 
+            // Prevent accidental hard reload on form submit (e.g. Enter key pressed)
+            if (form) {
+                form.addEventListener('submit', function (e) {
+                    e.preventDefault();
+                    clearTimeout(searchTimeout);
+                    fetchProducts(1);
+                    return false;
+                });
+            }
+
             // 1. Live search with 300ms debounce
             searchInput.addEventListener('input', function () {
+                const query = this.value.trim();
+                if (clearSearchBtn) {
+                    clearSearchBtn.classList.toggle('d-none', !query);
+                }
                 clearTimeout(searchTimeout);
                 searchTimeout = setTimeout(() => {
                     fetchProducts(1);
                 }, 300);
             });
 
-            // Clear search button if present
-            const clearSearchBtn = document.getElementById('clearSearchBtn');
+            searchInput.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    clearTimeout(searchTimeout);
+                    fetchProducts(1);
+                }
+            });
+
+            // Clear search button
             if (clearSearchBtn) {
                 clearSearchBtn.addEventListener('click', function () {
                     searchInput.value = '';
-                    this.remove();
+                    this.classList.add('d-none');
                     fetchProducts(1);
                 });
             }
@@ -301,6 +326,13 @@
             sortSelect.addEventListener('change', function () {
                 fetchProducts(1);
             });
+
+            // 2b. PageSize dropdown change
+            if (pageSizeSelect) {
+                pageSizeSelect.addEventListener('change', function () {
+                    fetchProducts(1);
+                });
+            }
 
             // 3. Category tags click
             categoryTags.forEach(tag => {
@@ -313,24 +345,34 @@
                     const catId = this.getAttribute('data-category-id') || '';
                     hiddenCategoryId.value = catId;
 
-                    fetchProducts(1);
+                    fetchProducts(1, true, true);
                 });
             });
 
-            // 4. Delegated pagination click
+            // 4. Delegated pagination click (100% AJAX, no page reload)
             gridContainer.addEventListener('click', function (e) {
                 const pageLink = e.target.closest('.ajax-page-link');
                 if (pageLink) {
                     e.preventDefault();
-                    const targetPage = parseInt(pageLink.getAttribute('data-page'));
-                    if (targetPage && !pageLink.parentElement.classList.contains('disabled') && !pageLink.parentElement.classList.contains('active')) {
-                        fetchProducts(targetPage);
+                    const pageItem = pageLink.closest('.page-item');
+                    if (pageItem && (pageItem.classList.contains('disabled') || pageItem.classList.contains('active'))) {
+                        return;
+                    }
 
-                        // Smoothly scroll up to products grid
-                        const section = document.getElementById('productsSection');
-                        if (section) {
-                            section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                        }
+                    const targetPage = parseInt(pageLink.getAttribute('data-page'));
+                    const targetCategory = pageLink.getAttribute('data-category-id');
+                    if (targetCategory !== null && targetCategory !== undefined) {
+                        hiddenCategoryId.value = targetCategory;
+
+                        // Synchronize category tags visual state
+                        categoryTags.forEach(t => {
+                            const cid = t.getAttribute('data-category-id') || '';
+                            t.classList.toggle('active', cid === targetCategory);
+                        });
+                    }
+
+                    if (targetPage && targetPage > 0) {
+                        fetchProducts(targetPage, true, true);
                     }
                     return;
                 }
@@ -340,8 +382,10 @@
                 if (resetBtn) {
                     e.preventDefault();
                     searchInput.value = '';
+                    if (clearSearchBtn) clearSearchBtn.classList.add('d-none');
                     hiddenCategoryId.value = '';
                     sortSelect.value = 'popular';
+                    if (pageSizeSelect) pageSizeSelect.value = '6';
 
                     categoryTags.forEach(t => t.classList.remove('active'));
                     const allTag = document.querySelector('.ajax-category-tag[data-category-id=""]');
@@ -440,21 +484,66 @@
                 }
             });
 
-            // 8. Handle browser Back/Forward navigation
+            // Initialize history state on first page load
+            const initQuery = searchInput.value.trim();
+            const initCat = hiddenCategoryId.value.trim();
+            const initSort = sortSelect.value.trim();
+            const initPageSize = pageSizeSelect ? pageSizeSelect.value.trim() : (hiddenPageSize.value || '6');
+            const initPage = parseInt(hiddenPage.value || '1');
+
+            window.history.replaceState({
+                query: initQuery,
+                categoryId: initCat,
+                sortBy: initSort,
+                pageSize: initPageSize,
+                page: initPage
+            }, '', window.location.href);
+
+            // 8. Handle browser Back/Forward navigation with AJAX (NEVER reload page)
             window.addEventListener('popstate', function (e) {
-                if (e.state) {
-                    searchInput.value = e.state.query || '';
-                    hiddenCategoryId.value = e.state.categoryId || '';
-                    sortSelect.value = e.state.sortBy || 'popular';
+                const state = e.state;
+                if (state) {
+                    searchInput.value = state.query || '';
+                    hiddenCategoryId.value = state.categoryId || '';
+                    sortSelect.value = state.sortBy || 'popular';
+                    if (pageSizeSelect && state.pageSize) {
+                        pageSizeSelect.value = state.pageSize;
+                        hiddenPageSize.value = state.pageSize;
+                    }
+                    if (clearSearchBtn) {
+                        clearSearchBtn.classList.toggle('d-none', !searchInput.value.trim());
+                    }
 
                     categoryTags.forEach(t => {
                         const cid = t.getAttribute('data-category-id') || '';
-                        t.classList.toggle('active', cid === (e.state.categoryId || ''));
+                        t.classList.toggle('active', cid === (state.categoryId || ''));
                     });
 
-                    fetchProducts(e.state.page || 1, false);
+                    fetchProducts(state.page || 1, false, false);
                 } else {
-                    location.reload();
+                    const urlParams = new URLSearchParams(window.location.search);
+                    searchInput.value = urlParams.get('Query') || '';
+                    hiddenCategoryId.value = urlParams.get('CategoryId') || '';
+                    sortSelect.value = urlParams.get('SortBy') || 'popular';
+                    if (pageSizeSelect && urlParams.has('PageSize')) {
+                        pageSizeSelect.value = urlParams.get('PageSize');
+                        hiddenPageSize.value = pageSizeSelect.value;
+                    } else if (pageSizeSelect) {
+                        pageSizeSelect.value = '6';
+                        hiddenPageSize.value = '6';
+                    }
+                    if (clearSearchBtn) {
+                        clearSearchBtn.classList.toggle('d-none', !searchInput.value.trim());
+                    }
+
+                    const pageFromUrl = parseInt(urlParams.get('Page')) || 1;
+
+                    categoryTags.forEach(t => {
+                        const cid = t.getAttribute('data-category-id') || '';
+                        t.classList.toggle('active', cid === (hiddenCategoryId.value));
+                    });
+
+                    fetchProducts(pageFromUrl, false, false);
                 }
             });
         });

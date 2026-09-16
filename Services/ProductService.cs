@@ -64,7 +64,19 @@ public class ProductService : GenericService<Product>, IProductService
 
     public async Task<ProductListViewModel> GetFilteredProductsAsync(ProductFilterViewModel filter)
     {
-        var cacheKey = $"filtered_{filter.Query}_{filter.CategoryId}_{filter.SortBy}_{filter.Page}_{filter.PageSize}";
+        var page = Math.Max(1, filter.Page);
+        var pageSize = filter.PageSize > 0 ? Math.Clamp(filter.PageSize, 1, 100) : 6;
+        var queryTerm = filter.Query?.Trim();
+        var categoryId = (filter.CategoryId.HasValue && filter.CategoryId.Value > 0) ? filter.CategoryId.Value : (int?)null;
+        var sortBy = string.IsNullOrWhiteSpace(filter.SortBy) ? "popular" : filter.SortBy.Trim();
+
+        // Ensure filter object reflects normalized parameters
+        filter.Page = page;
+        filter.PageSize = pageSize;
+        filter.CategoryId = categoryId;
+        filter.SortBy = sortBy;
+
+        var cacheKey = $"filtered_{queryTerm}_{categoryId}_{sortBy}_{page}_{pageSize}";
 
         return await _cache.GetOrCreateAsync(cacheKey, async entry =>
         {
@@ -76,22 +88,21 @@ public class ProductService : GenericService<Product>, IProductService
                 .Include(p => p.Category)
                 .AsQueryable();
 
-            if (!string.IsNullOrWhiteSpace(filter.Query))
+            if (!string.IsNullOrWhiteSpace(queryTerm))
             {
-                var term = filter.Query.Trim();
                 query = query.Where(p =>
-                    EF.Functions.ILike(p.Name, $"%{term}%") ||
-                    (p.Description != null && EF.Functions.ILike(p.Description, $"%{term}%")) ||
-                    (p.PackageType != null && EF.Functions.ILike(p.PackageType, $"%{term}%")) ||
-                    (p.UnitSize != null && EF.Functions.ILike(p.UnitSize, $"%{term}%")));
+                    EF.Functions.ILike(p.Name, $"%{queryTerm}%") ||
+                    (p.Description != null && EF.Functions.ILike(p.Description, $"%{queryTerm}%")) ||
+                    (p.PackageType != null && EF.Functions.ILike(p.PackageType, $"%{queryTerm}%")) ||
+                    (p.UnitSize != null && EF.Functions.ILike(p.UnitSize, $"%{queryTerm}%")));
             }
 
-            if (filter.CategoryId.HasValue && filter.CategoryId.Value > 0)
+            if (categoryId.HasValue)
             {
-                query = query.Where(p => p.CategoryId == filter.CategoryId.Value);
+                query = query.Where(p => p.CategoryId == categoryId.Value);
             }
 
-            query = filter.SortBy switch
+            query = sortBy switch
             {
                 "price_asc" => query.OrderBy(p => p.Price),
                 "price_desc" => query.OrderByDescending(p => p.Price),
@@ -100,8 +111,6 @@ public class ProductService : GenericService<Product>, IProductService
             };
 
             var totalCount = await query.CountAsync();
-            var page = Math.Max(1, filter.Page);
-            var pageSize = Math.Clamp(filter.PageSize, 1, 100);
 
             var products = await query
                 .Skip((page - 1) * pageSize)
@@ -117,9 +126,9 @@ public class ProductService : GenericService<Product>, IProductService
                 TotalCount = totalCount,
                 CurrentPage = page,
                 PageSize = pageSize,
-                SelectedCategoryId = filter.CategoryId,
-                SelectedSort = filter.SortBy ?? "popular",
-                Query = filter.Query
+                SelectedCategoryId = categoryId,
+                SelectedSort = sortBy,
+                Query = queryTerm
             };
         }) ?? new ProductListViewModel();
     }
