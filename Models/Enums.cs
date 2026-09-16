@@ -26,3 +26,9 @@ public enum PaymentStatus
     Refunded = 3
 }
 
+public enum UserRole
+{
+    Customer = 0,
+    Admin = 1
+}
+

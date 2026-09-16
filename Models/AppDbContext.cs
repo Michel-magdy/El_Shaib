@@ -28,6 +28,10 @@ public class AppDbContext : DbContext
             .HasIndex(c => c.Email)
             .IsUnique();
 
+        modelBuilder.Entity<Customer>()
+            .Property(c => c.Role)
+            .HasDefaultValue(UserRole.Customer);
+
         // Order indexes and relations
         modelBuilder.Entity<Order>()
             .HasIndex(o => o.OrderNumber)

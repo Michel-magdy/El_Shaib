@@ -82,11 +82,51 @@ using (var scope = app.Services.CreateScope())
     {
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         db.Database.Migrate();
+
+        // Enforce single Admin account in database
+        var adminEmail = (app.Configuration["AdminSettings:Email"] 
+            ?? Environment.GetEnvironmentVariable("ADMIN_EMAIL") 
+            ?? "admin@elshaib.com").Trim().ToLowerInvariant();
+
+        var adminUser = db.Customers.FirstOrDefault(c => c.Email.ToLower() == adminEmail);
+        if (adminUser != null)
+        {
+            if (adminUser.Role != UserRole.Admin)
+            {
+                adminUser.Role = UserRole.Admin;
+                db.SaveChanges();
+            }
+        }
+        else
+        {
+            var newAdmin = new Customer
+            {
+                FullName = "مدير النظام",
+                Email = adminEmail,
+                Phone = "01000000000",
+                Role = UserRole.Admin,
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow
+            };
+            db.Customers.Add(newAdmin);
+            db.SaveChanges();
+        }
+
+        // Ensure ONLY this single account has Admin role in the project
+        var otherAdmins = db.Customers.Where(c => c.Role == UserRole.Admin && c.Email.ToLower() != adminEmail).ToList();
+        if (otherAdmins.Count > 0)
+        {
+            foreach (var other in otherAdmins)
+            {
+                other.Role = UserRole.Customer;
+            }
+            db.SaveChanges();
+        }
     }
     catch (Exception ex)
     {
         var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-        logger.LogWarning(ex, "Could not apply database migrations on startup: {Message}", ex.Message);
+        logger.LogWarning(ex, "Could not apply database migrations or seed admin on startup: {Message}", ex.Message);
     }
 }
 

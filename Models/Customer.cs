@@ -20,6 +20,10 @@ public class Customer
 
     public bool IsActive { get; set; } = true;
 
+    public UserRole Role { get; set; } = UserRole.Customer;
+
+    public bool IsAdmin => Role == UserRole.Admin;
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public DateTime? LastLoginAt { get; set; }

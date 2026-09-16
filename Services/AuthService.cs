@@ -10,10 +10,12 @@ public class AuthService : IAuthService
 {
     private readonly AppDbContext _context;
     private readonly PasswordHasher<Customer> _passwordHasher;
+    private readonly IConfiguration _config;
 
-    public AuthService(AppDbContext context)
+    public AuthService(AppDbContext context, IConfiguration config)
     {
         _context = context;
+        _config = config;
         _passwordHasher = new PasswordHasher<Customer>();
     }
 
@@ -62,9 +64,17 @@ public class AuthService : IAuthService
 
         // Generate faked or normalized email
         string cleanEmail;
+        var adminEmail = (_config["AdminSettings:Email"] ?? Environment.GetEnvironmentVariable("ADMIN_EMAIL") ?? "admin@elshaib.com").Trim().ToLowerInvariant();
+
         if (!string.IsNullOrWhiteSpace(model.Email))
         {
             cleanEmail = model.Email.Trim().ToLowerInvariant();
+
+            if (string.Equals(cleanEmail, adminEmail, StringComparison.OrdinalIgnoreCase))
+            {
+                return (false, "لا يمكن إنشاء حساب بهذا البريد الإلكتروني المخصص للإدارة.", null);
+            }
+
             var emailExists = await _context.Customers.AnyAsync(c => c.Email.ToLower() == cleanEmail);
             if (emailExists)
             {
@@ -90,6 +100,7 @@ public class AuthService : IAuthService
             FullName = model.FullName.Trim(),
             Email = cleanEmail,
             Phone = cleanPhone,
+            Role = UserRole.Customer,
             IsActive = true,
             CreatedAt = DateTime.UtcNow
         };

@@ -11,10 +11,12 @@ namespace El_Shaib.Controllers;
 public class AccountController : Controller
 {
     private readonly IAuthService _authService;
+    private readonly IConfiguration _config;
 
-    public AccountController(IAuthService authService)
+    public AccountController(IAuthService authService, IConfiguration config)
     {
         _authService = authService;
+        _config = config;
     }
 
     // GET: /Account/Login
@@ -46,12 +48,20 @@ public class AccountController : Controller
             return View(model);
         }
 
+        var adminEmail = (_config["AdminSettings:Email"] ?? Environment.GetEnvironmentVariable("ADMIN_EMAIL") ?? "admin@elshaib.com").Trim().ToLowerInvariant();
+        if (customer.Role == Models.UserRole.Admin || string.Equals(customer.Email, adminEmail, StringComparison.OrdinalIgnoreCase))
+        {
+            ModelState.AddModelError("", "حساب الإدارة مخصص للاستخدام عبر تطبيق الهاتف فقط، لا يمكن تسجيل الدخول به عبر الموقع.");
+            return View(model);
+        }
+
         var claims = new List<Claim>
         {
             new(ClaimTypes.NameIdentifier, customer.Id.ToString()),
             new(ClaimTypes.Name, customer.FullName),
             new(ClaimTypes.Email, customer.Email),
-            new(ClaimTypes.MobilePhone, customer.Phone)
+            new(ClaimTypes.MobilePhone, customer.Phone),
+            new(ClaimTypes.Role, customer.Role.ToString())
         };
 
         var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
@@ -106,7 +116,8 @@ public class AccountController : Controller
             new(ClaimTypes.NameIdentifier, customer.Id.ToString()),
             new(ClaimTypes.Name, customer.FullName),
             new(ClaimTypes.Email, customer.Email),
-            new(ClaimTypes.MobilePhone, customer.Phone)
+            new(ClaimTypes.MobilePhone, customer.Phone),
+            new(ClaimTypes.Role, customer.Role.ToString())
         };
 
         var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
