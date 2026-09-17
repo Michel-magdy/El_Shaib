@@ -31,13 +31,23 @@ public class SupabaseStorageService : IStorageService
         {
             var val = _config[key];
             if (!string.IsNullOrWhiteSpace(val))
-                return val.Trim();
+                return CleanVal(val);
 
             val = Environment.GetEnvironmentVariable(key);
             if (!string.IsNullOrWhiteSpace(val))
-                return val.Trim();
+                return CleanVal(val);
         }
         return null;
+    }
+
+    private static string CleanVal(string val)
+    {
+        val = val.Trim();
+        if ((val.StartsWith("\"") && val.EndsWith("\"")) || (val.StartsWith("'") && val.EndsWith("'")))
+        {
+            val = val.Substring(1, val.Length - 2).Trim();
+        }
+        return val;
     }
 
     public async Task<string> UploadReceiptAsync(IFormFile file, string fileName)
