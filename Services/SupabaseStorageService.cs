@@ -42,9 +42,6 @@ public class SupabaseStorageService : IStorageService
 
     public async Task<string> UploadReceiptAsync(IFormFile file, string fileName)
     {
-        var url = _config["Supabase:Url"]?.TrimEnd('/');
-        var key = _config["Supabase:Key"];
-        var bucket = _config["Supabase:ReceiptBucket"] ?? _config["Supabase:ReceiptsBucket"] ?? "receipts";
         var url = GetConfigValue(
             "Supabase:Url", 
             "Supabase__Url", 
@@ -69,7 +66,6 @@ public class SupabaseStorageService : IStorageService
 
         if (string.IsNullOrWhiteSpace(url) || string.IsNullOrWhiteSpace(key))
         {
-            _logger.LogWarning("Supabase Url or Key is missing from configuration. Falling back to local storage.");
             _logger.LogError("Supabase Storage configuration missing on server! Url='{Url}', KeyConfigured={HasKey}. Falling back to local disk.", 
                 url ?? "EMPTY", !string.IsNullOrWhiteSpace(key));
             return await UploadLocallyAsync(file, fileName);
@@ -94,8 +90,6 @@ public class SupabaseStorageService : IStorageService
                 return publicUrl;
             }
 
-            // If receipts bucket failed (e.g. not created yet), try the existing products bucket
-            var fallbackBucket = _config["Supabase:Bucket"] ?? "products";
             // If receipts bucket failed (e.g. not created yet), try the fallback bucket (e.g. products)
             var fallbackBucket = GetConfigValue("Supabase:Bucket", "Supabase__Bucket", "SUPABASE_BUCKET") ?? "products";
             if (!string.Equals(bucket, fallbackBucket, StringComparison.OrdinalIgnoreCase))
@@ -168,7 +162,6 @@ public class SupabaseStorageService : IStorageService
             }
 
             var errorBody = await response.Content.ReadAsStringAsync();
-            _logger.LogWarning("Supabase upload to {Url} returned status {Status}: {Body}", uploadUrl, response.StatusCode, errorBody);
             _logger.LogError("Supabase upload to {Url} failed with HTTP status {Status}: {Body}", uploadUrl, (int)response.StatusCode, errorBody);
             return false;
         }
