@@ -25,15 +25,53 @@ public class SupabaseStorageService : IStorageService
         _logger = logger;
     }
 
+    private string? GetConfigValue(params string[] keys)
+    {
+        foreach (var key in keys)
+        {
+            var val = _config[key];
+            if (!string.IsNullOrWhiteSpace(val))
+                return val.Trim();
+
+            val = Environment.GetEnvironmentVariable(key);
+            if (!string.IsNullOrWhiteSpace(val))
+                return val.Trim();
+        }
+        return null;
+    }
+
     public async Task<string> UploadReceiptAsync(IFormFile file, string fileName)
     {
         var url = _config["Supabase:Url"]?.TrimEnd('/');
         var key = _config["Supabase:Key"];
         var bucket = _config["Supabase:ReceiptBucket"] ?? _config["Supabase:ReceiptsBucket"] ?? "receipts";
+        var url = GetConfigValue(
+            "Supabase:Url", 
+            "Supabase__Url", 
+            "SUPABASE_URL", 
+            "Supabase_Url")?.TrimEnd('/');
+
+        var key = GetConfigValue(
+            "Supabase:Key", 
+            "Supabase__Key", 
+            "SUPABASE_KEY", 
+            "SUPABASE_SERVICE_ROLE_KEY", 
+            "SUPABASE_SECRET_KEY", 
+            "Supabase_Key");
+
+        var bucket = GetConfigValue(
+            "Supabase:ReceiptBucket", 
+            "Supabase__ReceiptBucket", 
+            "Supabase:ReceiptsBucket", 
+            "Supabase__ReceiptsBucket", 
+            "SUPABASE_RECEIPT_BUCKET", 
+            "SUPABASE_RECEIPTS_BUCKET") ?? "receipts";
 
         if (string.IsNullOrWhiteSpace(url) || string.IsNullOrWhiteSpace(key))
         {
             _logger.LogWarning("Supabase Url or Key is missing from configuration. Falling back to local storage.");
+            _logger.LogError("Supabase Storage configuration missing on server! Url='{Url}', KeyConfigured={HasKey}. Falling back to local disk.", 
+                url ?? "EMPTY", !string.IsNullOrWhiteSpace(key));
             return await UploadLocallyAsync(file, fileName);
         }
 
@@ -58,6 +96,8 @@ public class SupabaseStorageService : IStorageService
 
             // If receipts bucket failed (e.g. not created yet), try the existing products bucket
             var fallbackBucket = _config["Supabase:Bucket"] ?? "products";
+            // If receipts bucket failed (e.g. not created yet), try the fallback bucket (e.g. products)
+            var fallbackBucket = GetConfigValue("Supabase:Bucket", "Supabase__Bucket", "SUPABASE_BUCKET") ?? "products";
             if (!string.Equals(bucket, fallbackBucket, StringComparison.OrdinalIgnoreCase))
             {
                 _logger.LogWarning("Attempting upload to fallback bucket '{FallbackBucket}/receipts/{FileName}'", fallbackBucket, fileName);
@@ -129,6 +169,7 @@ public class SupabaseStorageService : IStorageService
 
             var errorBody = await response.Content.ReadAsStringAsync();
             _logger.LogWarning("Supabase upload to {Url} returned status {Status}: {Body}", uploadUrl, response.StatusCode, errorBody);
+            _logger.LogError("Supabase upload to {Url} failed with HTTP status {Status}: {Body}", uploadUrl, (int)response.StatusCode, errorBody);
             return false;
         }
         catch (Exception ex)
