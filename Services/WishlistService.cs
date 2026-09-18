@@ -82,7 +82,7 @@ public class WishlistService : IWishlistService
         return await _context.Products
             .Include(p => p.Images)
             .Include(p => p.Category)
-            .Where(p => set.Contains(p.Id))
+            .Where(p => set.Contains(p.Id) && p.IsVisible)
             .ToListAsync();
     }
 

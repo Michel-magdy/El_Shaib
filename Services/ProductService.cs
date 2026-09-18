@@ -22,6 +22,7 @@ public class ProductService : GenericService<Product>, IProductService
             entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5);
             return await entity
                 .AsNoTracking()
+                .Where(product => product.IsVisible)
                 .Include(product => product.Images)
                 .Include(product => product.Category)
                 .ToListAsync();
@@ -32,6 +33,7 @@ public class ProductService : GenericService<Product>, IProductService
     {
         return await entity
             .AsNoTracking()
+            .Where(p => p.IsVisible)
             .Include(p => p.Category)
             .Include(p => p.Images)
             .FirstOrDefaultAsync(p => p.Id == id);
@@ -41,6 +43,7 @@ public class ProductService : GenericService<Product>, IProductService
     {
         return await entity
             .AsNoTracking()
+            .Where(product => product.IsVisible)
             .Include(product => product.Images)
             .Include(product => product.Category)
             .Skip((pageNumber - 1) * pageSize)
@@ -84,6 +87,7 @@ public class ProductService : GenericService<Product>, IProductService
 
             var query = context.Products
                 .AsNoTracking()
+                .Where(p => p.IsVisible)
                 .Include(p => p.Images)
                 .Include(p => p.Category)
                 .AsQueryable();
@@ -137,9 +141,9 @@ public class ProductService : GenericService<Product>, IProductService
     {
         var query = context.Products
             .AsNoTracking()
+            .Where(p => p.IsVisible && p.Id != currentProductId)
             .Include(p => p.Images)
-            .Include(p => p.Category)
-            .Where(p => p.Id != currentProductId);
+            .Include(p => p.Category);
 
         var related = await query
             .Where(p => p.CategoryId == categoryId)

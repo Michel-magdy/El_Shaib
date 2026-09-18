@@ -64,7 +64,7 @@ public class CartService : ICartService
             .AsNoTracking()
             .Include(p => p.Images)
             .Include(p => p.Category)
-            .Where(p => productIds.Contains(p.Id))
+            .Where(p => productIds.Contains(p.Id) && p.IsVisible)
             .ToListAsync();
 
         foreach (var product in products)
@@ -104,7 +104,7 @@ public class CartService : ICartService
         {
             var p = await _context.Products
                 .AsNoTracking()
-                .Where(x => x.Id == productId)
+                .Where(x => x.Id == productId && x.IsVisible)
                 .Select(x => new { x.Name, x.StockQuantity })
                 .FirstOrDefaultAsync();
 

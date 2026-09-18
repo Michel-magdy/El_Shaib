@@ -32,6 +32,11 @@ public class AppDbContext : DbContext
             .Property(c => c.Role)
             .HasDefaultValue(UserRole.Customer);
 
+        // Product configurations
+        modelBuilder.Entity<Product>()
+            .Property(p => p.IsVisible)
+            .HasDefaultValue(true);
+
         // Order indexes and relations
         modelBuilder.Entity<Order>()
             .HasIndex(o => o.OrderNumber)

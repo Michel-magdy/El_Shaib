@@ -30,6 +30,8 @@ public class Product
 
     public bool IsFeatured { get; set; }
 
+    public bool IsVisible { get; set; } = true;
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public DateTime? UpdatedAt { get; set; }
