@@ -411,6 +411,41 @@
 .cs-coupon-input-group button:hover {
     background: #1B4332;
 }
+.cs-coupon-applied-pill {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #E8F5E9;
+    border: 1.5px dashed #2D6A4F;
+    border-radius: 10px;
+    padding: 0.5rem 0.85rem;
+}
+.cs-coupon-code-badge {
+    font-weight: 800;
+    font-size: 0.9rem;
+    color: #1B4332;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+.cs-coupon-remove-btn {
+    background: none;
+    border: none;
+    color: #DC2626;
+    font-size: 1rem;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s, color 0.2s;
+}
+.cs-coupon-remove-btn:hover {
+    background: rgba(220, 38, 38, 0.12);
+    color: #991B1B;
+}
 
 /* Checkout Button */
 .cs-checkout-btn {

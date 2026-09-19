@@ -278,6 +278,16 @@
                             <span class="text-muted">رسوم التوصيل:</span>
                             <span class="fw-bold text-success" id="orderDeliveryFee">@Model.Cart.DeliveryFee.ToString("0.00") ج.م</span>
                         </div>
+                        @if (Model.Cart.Discount > 0)
+                        {
+                            <div class="d-flex justify-content-between mb-2 text-danger">
+                                <span>
+                                    <i class="fas fa-percentage me-1"></i>
+                                    الخصم (@Model.Cart.CouponCode):
+                                </span>
+                                <span class="fw-bold" id="orderDiscount" data-discount="@Model.Cart.Discount">-@Model.Cart.Discount.ToString("0.00") ج.م</span>
+                            </div>
+                        }
                         <hr />
                         <div class="d-flex justify-content-between align-items-center mb-4">
                             <span class="h6 fw-bold mb-0">الإجمالي النهائي:</span>
@@ -314,6 +324,8 @@
 
             if (areaSelect && deliveryFeeEl && finalTotalEl && subtotalEl) {
                 const subtotal = parseFloat(subtotalEl.dataset.subtotal) || 0;
+                const discountEl = document.getElementById('orderDiscount');
+                const discount = discountEl ? (parseFloat(discountEl.dataset.discount) || 0) : 0;
                 const freeThreshold = 200;
 
                 function updateFee() {
@@ -329,7 +341,7 @@
                         deliveryFeeEl.className = 'fw-bold';
                     }
 
-                    const finalTotal = subtotal + fee;
+                    const finalTotal = Math.max(0, subtotal + fee - discount);
                     const formattedTotal = finalTotal.toFixed(2) + ' ج.م';
                     finalTotalEl.textContent = formattedTotal;
                     if (instapayTotalEl) {

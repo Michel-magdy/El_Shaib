@@ -13,13 +13,15 @@ public class CartService : ICartService
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly AppDbContext _context;
     private readonly IMemoryCache _cache;
+    private readonly ICouponService _couponService;
     private const string CartSessionKey = "ELSHAIB_CART_SESSION";
 
-    public CartService(IHttpContextAccessor httpContextAccessor, AppDbContext context, IMemoryCache cache)
+    public CartService(IHttpContextAccessor httpContextAccessor, AppDbContext context, IMemoryCache cache, ICouponService couponService)
     {
         _httpContextAccessor = httpContextAccessor;
         _context = context;
         _cache = cache;
+        _couponService = couponService;
     }
 
     private ISession Session => _httpContextAccessor.HttpContext?.Session
@@ -89,6 +91,14 @@ public class CartService : ICartService
                 PackageType = product.PackageType,
                 CategoryName = product.Category?.Name
             });
+        }
+
+        // Apply coupon discount if any exists in session and is valid
+        var (coupon, discount) = await _couponService.GetCurrentCouponDiscountAsync(model.SubTotal);
+        if (coupon != null && discount > 0)
+        {
+            model.CouponCode = coupon.Code;
+            model.Discount = discount;
         }
 
         return model;
@@ -179,6 +189,8 @@ public class CartService : ICartService
             SubTotal = fullCart.SubTotal,
             Total = fullCart.Total,
             DeliveryFee = fullCart.DeliveryFee,
+            Discount = fullCart.Discount,
+            CouponCode = fullCart.CouponCode,
             LineTotal = item?.LineTotal ?? 0m
         };
     }
@@ -197,7 +209,9 @@ public class CartService : ICartService
             TotalCount = fullCart.TotalItemCount,
             SubTotal = fullCart.SubTotal,
             Total = fullCart.Total,
-            DeliveryFee = fullCart.DeliveryFee
+            DeliveryFee = fullCart.DeliveryFee,
+            Discount = fullCart.Discount,
+            CouponCode = fullCart.CouponCode
         };
     }
 

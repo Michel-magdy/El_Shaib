@@ -53,8 +53,15 @@ public class Order
     [ForeignKey("Customer")]
     public int CustomerId { get; set; }
 
+    [ForeignKey("Coupon")]
+    public int? CouponId { get; set; }
+
+    [MaxLength(50)]
+    public string? CouponCode { get; set; }
+
     // Navigation
     public Customer Customer { get; set; } = null!;
+    public Coupon? Coupon { get; set; }
     public ICollection<OrderItem> Items { get; set; } = new List<OrderItem>();
 }
 

@@ -10,11 +10,13 @@ public class OrderService : IOrderService
 {
     private readonly AppDbContext _context;
     private readonly IMemoryCache _cache;
+    private readonly ICouponService _couponService;
 
-    public OrderService(AppDbContext context, IMemoryCache cache)
+    public OrderService(AppDbContext context, IMemoryCache cache, ICouponService couponService)
     {
         _context = context;
         _cache = cache;
+        _couponService = couponService;
     }
 
     public async Task<List<DeliveryArea>> GetDeliveryAreasAsync()
@@ -97,7 +99,10 @@ public class OrderService : IOrderService
         var deliveryArea = await GetDeliveryAreaByIdAsync(model.DeliveryAreaId);
         var subtotal = cart.SubTotal;
         var deliveryFee = subtotal >= cart.FreeDeliveryThreshold ? 0m : (deliveryArea?.DeliveryFee ?? 25m);
-        var total = subtotal + deliveryFee;
+
+        // Resolve coupon discount
+        var (coupon, discountAmount) = await _couponService.GetCurrentCouponDiscountAsync(subtotal);
+        var total = Math.Max(0m, subtotal + deliveryFee - discountAmount);
 
         var fullDeliveryAddress = $"{model.City} - {model.District} - شارع {model.Street}";
         if (deliveryArea != null)
@@ -117,8 +122,10 @@ public class OrderService : IOrderService
             PaymentStatus = PaymentStatus.Pending,
             SubTotal = subtotal,
             DeliveryFee = deliveryFee,
-            Discount = 0m,
+            Discount = discountAmount,
             Total = total,
+            CouponId = coupon?.Id,
+            CouponCode = coupon?.Code,
             DeliveryAddress = fullDeliveryAddress,
             DeliveryPhone = model.Phone,
             Notes = model.AdditionalNotes,
@@ -148,6 +155,13 @@ public class OrderService : IOrderService
 
         _context.Orders.Add(order);
         await _context.SaveChangesAsync();
+
+        // Record coupon usage and clear coupon from session
+        if (coupon != null)
+        {
+            await _couponService.RecordCouponUsageAsync(coupon.Id);
+            await _couponService.RemoveCouponAsync();
+        }
 
         return order;
     }
@@ -180,6 +194,7 @@ public class OrderService : IOrderService
             SubTotal = order.SubTotal,
             DeliveryFee = order.DeliveryFee,
             Discount = order.Discount,
+            CouponCode = order.CouponCode,
             Total = order.Total,
             CreatedAt = order.CreatedAt,
             Items = order.Items.Select(i => new OrderItemViewModel

@@ -32,3 +32,9 @@ public enum UserRole
     Admin = 1
 }
 
+public enum DiscountType
+{
+    Percentage = 0, // e.g. 10%
+    FixedAmount = 1 // e.g. 50 EGP
+}
+

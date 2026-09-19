@@ -183,12 +183,12 @@
                                     @(Model.IsFreeDelivery ? "مجاني" : Model.DeliveryFee.ToString("0.00") + " ج.م")
                                 </span>
                             </div>
-                            <div class="cs-row">
+                            <div class="cs-row @(Model.Discount > 0 ? "" : "d-none")" id="csDiscountRow">
                                 <span>
                                     <i class="fas fa-percentage cs-icon"></i>
                                     الخصم
                                 </span>
-                                <span class="cs-value cs-discount" id="csDiscount">@Model.Discount.ToString("0.00") ج.م</span>
+                                <span class="cs-value cs-discount" id="csDiscount">-@Model.Discount.ToString("0.00") ج.م</span>
                             </div>
                         </div>
 
@@ -202,7 +202,18 @@
                         <!-- Coupon Code -->
                         <div class="cs-coupon">
                             <label>هل لديك كوبون خصم؟</label>
-                            <div class="cs-coupon-input-group">
+                            <div id="csCouponAppliedBox" class="@(Model.HasCoupon ? "" : "d-none")">
+                                <div class="cs-coupon-applied-pill">
+                                    <div class="cs-coupon-code-badge">
+                                        <i class="fas fa-tag"></i>
+                                        <span id="csAppliedCouponCode">@Model.CouponCode</span>
+                                    </div>
+                                    <button type="button" id="csCouponRemoveBtn" class="cs-coupon-remove-btn" title="إلغاء الكوبون">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="csCouponInputBox" class="cs-coupon-input-group @(Model.HasCoupon ? "d-none" : "")">
                                 <input type="text" placeholder="أدخل كود الخصم" id="csCouponInput" />
                                 <button type="button" id="csCouponBtn">تطبيق</button>
                             </div>
@@ -313,6 +324,8 @@
             function updateSummaryUI(data) {
                 const subtotalEl = document.getElementById('csSubtotal');
                 const deliveryEl = document.getElementById('csDelivery');
+                const discountEl = document.getElementById('csDiscount');
+                const discountRowEl = document.getElementById('csDiscountRow');
                 const totalEl = document.getElementById('csTotal');
                 const countEl = document.getElementById('cartItemCount');
                 const navBadges = document.querySelectorAll('.cart-badge');
@@ -327,10 +340,33 @@
                         deliveryEl.classList.remove('cs-delivery--free');
                     }
                 }
+                if (discountEl && discountRowEl) {
+                    if (data.discount > 0) {
+                        discountEl.textContent = '-' + data.discount.toFixed(2) + ' ج.م';
+                        discountRowEl.classList.remove('d-none');
+                    } else {
+                        discountRowEl.classList.add('d-none');
+                    }
+                }
                 if (totalEl) totalEl.textContent = data.total.toFixed(2) + ' ج.م';
                 if (countEl) countEl.textContent = data.totalCount;
 
                 navBadges.forEach(b => b.textContent = data.totalCount);
+
+                const couponAppliedBox = document.getElementById('csCouponAppliedBox');
+                const couponInputBox = document.getElementById('csCouponInputBox');
+                const appliedCodeEl = document.getElementById('csAppliedCouponCode');
+                const couponInput = document.getElementById('csCouponInput');
+
+                if (data.couponCode) {
+                    if (appliedCodeEl) appliedCodeEl.textContent = data.couponCode;
+                    if (couponAppliedBox) couponAppliedBox.classList.remove('d-none');
+                    if (couponInputBox) couponInputBox.classList.add('d-none');
+                    if (couponInput) couponInput.value = '';
+                } else {
+                    if (couponAppliedBox) couponAppliedBox.classList.add('d-none');
+                    if (couponInputBox) couponInputBox.classList.remove('d-none');
+                }
 
                 if (data.totalCount === 0) {
                     location.reload();
@@ -456,14 +492,72 @@
 
             // Coupon Code handler
             const couponBtn = document.getElementById('csCouponBtn');
-            if (couponBtn) {
-                couponBtn.addEventListener('click', function () {
-                    const input = document.getElementById('csCouponInput');
-                    const code = input ? input.value.trim() : '';
-                    if (!code) {
-                        if (window.showToast) window.showToast('يرجى إدخال كود الخصم أولاً', 'error');
+            const couponInput = document.getElementById('csCouponInput');
+            const couponRemoveBtn = document.getElementById('csCouponRemoveBtn');
+
+            async function handleApplyCoupon() {
+                const code = couponInput ? couponInput.value.trim() : '';
+                if (!code) {
+                    if (window.showToast) window.showToast('يرجى إدخال كود الخصم أولاً', 'error');
+                    else alert('يرجى إدخال كود الخصم أولاً');
+                    return;
+                }
+
+                if (couponBtn) {
+                    couponBtn.disabled = true;
+                    couponBtn.textContent = '...';
+                }
+
+                try {
+                    const formData = new FormData();
+                    formData.append('code', code);
+                    const res = await fetch('/Cart/ApplyCoupon', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        if (window.showToast) window.showToast(data.message, 'success');
+                        else alert(data.message);
+                        updateSummaryUI(data);
                     } else {
-                        if (window.showToast) window.showToast('كود الخصم غير صالح أو منتهي الصلاحية', 'error');
+                        if (window.showToast) window.showToast(data.message || 'فشل تطبيق كود الخصم', 'error');
+                        else alert(data.message || 'فشل تطبيق كود الخصم');
+                    }
+                } catch (err) {
+                    console.error('Error applying coupon:', err);
+                    if (window.showToast) window.showToast('حدث خطأ أثناء تطبيق كود الخصم', 'error');
+                } finally {
+                    if (couponBtn) {
+                        couponBtn.disabled = false;
+                        couponBtn.textContent = 'تطبيق';
+                    }
+                }
+            }
+
+            if (couponBtn) {
+                couponBtn.addEventListener('click', handleApplyCoupon);
+            }
+            if (couponInput) {
+                couponInput.addEventListener('keypress', function (e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleApplyCoupon();
+                    }
+                });
+            }
+
+            if (couponRemoveBtn) {
+                couponRemoveBtn.addEventListener('click', async function () {
+                    try {
+                        const res = await fetch('/Cart/RemoveCoupon', { method: 'POST' });
+                        const data = await res.json();
+                        if (data.success) {
+                            if (window.showToast) window.showToast(data.message, 'info');
+                            updateSummaryUI(data);
+                        }
+                    } catch (err) {
+                        console.error('Error removing coupon:', err);
                     }
                 });
             }

@@ -18,10 +18,16 @@ public class AppDbContext : DbContext
     public DbSet<Wishlist> Wishlists => Set<Wishlist>();
     public DbSet<DeliveryArea> DeliveryAreas => Set<DeliveryArea>();
     public DbSet<ContactMessage> ContactMessages => Set<ContactMessage>();
+    public DbSet<Coupon> Coupons => Set<Coupon>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        // Coupon configurations
+        modelBuilder.Entity<Coupon>()
+            .HasIndex(c => c.Code)
+            .IsUnique();
 
         // Customer indexes
         modelBuilder.Entity<Customer>()
@@ -47,6 +53,12 @@ public class AppDbContext : DbContext
             .WithMany(c => c.Orders)
             .HasForeignKey(o => o.CustomerId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Order>()
+            .HasOne(o => o.Coupon)
+            .WithMany(c => c.Orders)
+            .HasForeignKey(o => o.CouponId)
+            .OnDelete(DeleteBehavior.SetNull);
 
         // OrderItem relations
         modelBuilder.Entity<OrderItem>()

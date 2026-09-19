@@ -76,6 +76,7 @@ public class OrderConfirmationViewModel
     public decimal SubTotal { get; set; }
     public decimal DeliveryFee { get; set; }
     public decimal Discount { get; set; }
+    public string? CouponCode { get; set; }
     public decimal Total { get; set; }
     public DateTime CreatedAt { get; set; }
     public List<OrderItemViewModel> Items { get; set; } = new();

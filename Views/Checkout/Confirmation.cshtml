@@ -118,6 +118,13 @@
                             <td colspan="3" class="text-end text-muted">رسوم التوصيل:</td>
                             <td class="text-end text-success">@(Model.DeliveryFee == 0 ? "مجاني" : Model.DeliveryFee.ToString("0.00") + " ج.م")</td>
                         </tr>
+                        @if (Model.Discount > 0)
+                        {
+                            <tr class="text-danger">
+                                <td colspan="3" class="text-end">الخصم@(string.IsNullOrEmpty(Model.CouponCode) ? "" : $" ({Model.CouponCode})"):</td>
+                                <td class="text-end fw-bold">-@Model.Discount.ToString("0.00") ج.م</td>
+                            </tr>
+                        }
                         <tr class="fw-bold fs-5">
                             <td colspan="3" class="text-end" style="color: var(--primary, #1b4332);">الإجمالي النهائي:</td>
                             <td class="text-end text-primary" style="color: var(--primary, #1b4332) !important;">@Model.Total.ToString("0.00") ج.م</td>

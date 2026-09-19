@@ -68,6 +68,7 @@ builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IWishlistService, WishlistService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IStorageService, SupabaseStorageService>();
+builder.Services.AddScoped<ICouponService, CouponService>();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("ConnectionString"))
@@ -120,6 +121,41 @@ using (var scope = app.Services.CreateScope())
             {
                 other.Role = UserRole.Customer;
             }
+            db.SaveChanges();
+        }
+
+        // Seed initial coupons if none exist
+        if (!db.Coupons.Any())
+        {
+            db.Coupons.AddRange(
+                new Coupon
+                {
+                    Code = "WELCOME10",
+                    DiscountType = DiscountType.Percentage,
+                    DiscountValue = 10m,
+                    MinOrderAmount = 100m,
+                    MaxDiscountAmount = 50m,
+                    StartDate = DateTime.UtcNow.AddDays(-1),
+                    EndDate = DateTime.UtcNow.AddMonths(6),
+                    UsageLimit = 1000,
+                    UsageCount = 0,
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow
+                },
+                new Coupon
+                {
+                    Code = "SHAIB20",
+                    DiscountType = DiscountType.FixedAmount,
+                    DiscountValue = 20m,
+                    MinOrderAmount = 150m,
+                    StartDate = DateTime.UtcNow.AddDays(-1),
+                    EndDate = DateTime.UtcNow.AddMonths(3),
+                    UsageLimit = 500,
+                    UsageCount = 0,
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow
+                }
+            );
             db.SaveChanges();
         }
     }
